@@ -260,3 +260,8 @@ Selector strings, enum values and struct layouts were extracted from
 definitions), `Foundation/NSPrivate.hpp` (195), `QuartzCore/CAPrivate.hpp`
 (22), and the public class headers. Upstream is Apache-2.0; see
 `LICENSE.txt` in the upstream repository.
+
+# 외국 사람이 만든 안정적 버젼Metal-Rust
+- safe rust code
+  - https://github.com/gamesir-labs/Metal-Rust
+
