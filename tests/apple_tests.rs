@@ -4,10 +4,10 @@
 //! ```sh
 //! cargo test --target aarch64-apple-darwin
 //! ```
-#![allow(non_snake_case)]
 #![cfg(target_vendor = "apple")]
+#![allow(non_snake_case)]
 
-use metal_cpp_rs::objc_abi::autoreleasepool;
+use metal_cpp_rs::objc_abi::{NSUInteger, autoreleasepool};
 use metal_cpp_rs::prelude::*;
 
 #[test]
@@ -17,7 +17,7 @@ fn nsstring_roundtrip() {
         assert!(!s.is_nil());
         assert_eq!(s.to_string(), "hello metal-cpp-rs");
         let other = NSString::from_str("hello metal-cpp-rs");
-        assert!(s.isEqualToString(other.as_ref()));
+        assert!(s.isEqualToString(&other));
     });
 }
 
@@ -26,7 +26,7 @@ fn nsarray_count_and_index() {
     autoreleasepool(|| unsafe {
         let a = NSString::from_str("a");
         let b = NSString::from_str("b");
-        let arr = NSArray::arrayWithObjects(&[a.as_ref(), b.as_ref()]);
+        let arr = NSArray::arrayWithObjects(&[&*a, &*b]);
         assert_eq!(arr.count(), 2);
         assert_eq!(arr.objectAtIndex(1).to_string(), "b");
     });
