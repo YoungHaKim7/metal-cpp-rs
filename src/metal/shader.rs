@@ -3,20 +3,28 @@
 //! `MTL::FunctionConstantValues` (`Metal/MTLLibrary.hpp`,
 //! `MTLFunctionDescriptor.hpp`, `MTLFunctionConstantValues.hpp`).
 
-use crate::foundation::{NSArray, NSDictionary, NSError, NSObject, NSString};
-use crate::metal::argument::MTLArgumentEncoder;
-use crate::metal::device::MTLDevice;
-use crate::metal::enums::{
-    MTLCompileSymbolVisibility, MTLDataType, MTLFloatingPointConversionRoundingMode,
-    MTLFunctionOptions, MTLFunctionType, MTLLanguageVersion, MTLLibraryOptimizationLevel,
-    MTLLibraryType, MTLMathFloatingPointFunctions, MTLMathMode, MTLPatchType,
-};
-use crate::metal::types::MTLSize;
-use crate::objc_abi::{
-    NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_stret, send1, send2, send3,
-};
-use crate::objc_abi::{objc_class, sel};
 use std::ffi::c_void;
+
+use crate::{
+    foundation::{NSArray, NSDictionary, NSError, NSObject, NSString},
+    metal::{
+        argument::MTLArgumentEncoder,
+        device::MTLDevice,
+        enums::{
+            MTLCompileSymbolVisibility, MTLDataType, MTLFloatingPointConversionRoundingMode,
+            MTLFunctionOptions, MTLFunctionType, MTLLanguageVersion, MTLLibraryOptimizationLevel,
+            MTLLibraryType, MTLMathFloatingPointFunctions, MTLMathMode, MTLPatchType,
+        },
+        types::MTLSize,
+    },
+    objc_abi::{
+        {
+            NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_stret, send1, send2,
+            send3,
+        },
+        {objc_class, sel},
+    },
+};
 
 // ---------------------------------------------------------------------------
 // MTL::Library

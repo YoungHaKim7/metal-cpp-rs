@@ -3,22 +3,29 @@
 //! (`Metal/MTLResource.hpp`, `MTLBuffer.hpp`, `MTLTexture.hpp`,
 //! `MTLSampler.hpp`, `MTLHeap.hpp`).
 
-use crate::foundation::{NSRange, NSString};
-use crate::metal::device::MTLDevice;
-use crate::metal::enums::{
-    MTLBufferSparseTier, MTLCPUCacheMode, MTLHazardTrackingMode, MTLHeapType, MTLPixelFormat,
-    MTLPurgeableState, MTLResourceOptions, MTLSamplerAddressMode, MTLSamplerBorderColor,
-    MTLSamplerMinMagFilter, MTLSamplerMipFilter, MTLSamplerReductionMode, MTLSparsePageSize,
-    MTLStorageMode, MTLTextureCompressionType, MTLTextureSparseTier, MTLTextureType,
-    MTLTextureUsage,
-};
-use crate::metal::types::{GPUAddress, MTLRegion, MTLResourceID, MTLTextureSwizzleChannels};
-use crate::objc_abi::{
-    NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_f32, send1, send2, send3,
-    send4, send6,
-};
-use crate::objc_abi::{objc_class, sel};
 use std::ffi::c_void;
+
+use crate::{
+    foundation::{NSRange, NSString},
+    metal::{
+        device::MTLDevice,
+        enums::{
+            MTLBufferSparseTier, MTLCPUCacheMode, MTLHazardTrackingMode, MTLHeapType,
+            MTLPixelFormat, MTLPurgeableState, MTLResourceOptions, MTLSamplerAddressMode,
+            MTLSamplerBorderColor, MTLSamplerMinMagFilter, MTLSamplerMipFilter,
+            MTLSamplerReductionMode, MTLSparsePageSize, MTLStorageMode, MTLTextureCompressionType,
+            MTLTextureSparseTier, MTLTextureType, MTLTextureUsage,
+        },
+        types::{GPUAddress, MTLRegion, MTLResourceID, MTLTextureSwizzleChannels},
+    },
+    objc_abi::{
+        {
+            NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_f32, send1, send2,
+            send3, send4, send6,
+        },
+        {objc_class, sel},
+    },
+};
 
 // ---------------------------------------------------------------------------
 // MTL::Resource (base class of Buffer/Texture/Heap ...)

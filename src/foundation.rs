@@ -8,15 +8,18 @@
 //! `Foundation/NSPrivate.hpp` selector table (e.g. `UTF8String`,
 //! `stringWithCString:encoding:`, `addObserverForName:object:queue:usingBlock:`).
 
-use std::ffi::{CStr, CString, c_char};
-use std::marker::PhantomData;
-
-use crate::blocks::Block1;
-use crate::objc_abi::{
-    CFTimeInterval, NSInteger, NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool,
-    send_stret, send1, send1_bool, send2, send3, send4,
+use std::{
+    ffi::{CStr, CString, c_char},
+    marker::PhantomData,
 };
-use crate::objc_abi::{class, objc_class, sel};
+
+use crate::{
+    blocks::Block1,
+    objc_abi::{
+        CFTimeInterval, NSInteger, NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool,
+        send_stret, send1, send1_bool, send2, send3, send4, {class, objc_class, sel},
+    },
+};
 
 // ---------------------------------------------------------------------------
 // Force-link the Foundation framework so the classes below are registered in

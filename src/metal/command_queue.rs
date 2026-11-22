@@ -1,11 +1,14 @@
 //! `MTL::CommandQueue` + `MTL::CommandQueueDescriptor`
 //! (`Metal/MTLCommandQueue.hpp`).
 
-use crate::foundation::NSString;
-use crate::metal::command_buffer::{MTLCommandBuffer, MTLCommandBufferDescriptor};
-use crate::metal::device::MTLDevice;
-use crate::objc_abi::{NSUInteger, Obj, Raw, Ref, Strong, send, send1};
-use crate::objc_abi::{objc_class, sel};
+use crate::{
+    foundation::NSString,
+    metal::{
+        command_buffer::{MTLCommandBuffer, MTLCommandBufferDescriptor},
+        device::MTLDevice,
+    },
+    objc_abi::{NSUInteger, Obj, Raw, Ref, Strong, objc_class, sel, send, send1},
+};
 
 objc_class!(
     /// `MTL::CommandQueueDescriptor`.

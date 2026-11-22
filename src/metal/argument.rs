@@ -1,12 +1,16 @@
 //! Argument tables — `MTL::ArgumentDescriptor` and `MTL::ArgumentEncoder`
 //! (`Metal/MTLArgument.hpp`, `Metal/MTLArgumentEncoder.hpp`).
 
-use crate::foundation::NSString;
-use crate::metal::device::MTLDevice;
-use crate::metal::enums::{MTLBindingAccess, MTLDataType, MTLTextureType};
-use crate::objc_abi::{NSUInteger, Obj, Raw, Ref, Strong, send, send1, send2, send3};
-use crate::objc_abi::{objc_class, sel};
 use std::ffi::c_void;
+
+use crate::{
+    foundation::NSString,
+    metal::{
+        device::MTLDevice,
+        enums::{MTLBindingAccess, MTLDataType, MTLTextureType},
+    },
+    objc_abi::{NSUInteger, Obj, Raw, Ref, Strong, objc_class, sel, send, send1, send2, send3},
+};
 
 /// `MTL::ArgumentEncoder::AttributeStrideStatic` — `NS::UIntegerMax`.
 pub const MTLAttributeStrideStatic: NSUInteger = NSUInteger::MAX;
