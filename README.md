@@ -13,7 +13,7 @@
 era, Metal 4), implemented *concretely against the Objective-C ABI* — the
 same technique metal-cpp itself uses to bridge C++ to the runtime.
 
-Crate version `1.100.0`, built and checked with **rustc 1.100.0 stable**
+Crate version `0.1.0`, built and checked with **rustc 1.100.0 stable**
 (edition 2024, `rust-version = "1.100.0"`) — matching the requested
 toolchain version exactly. **Zero third-party dependencies.**
 
