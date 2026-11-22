@@ -6,23 +6,19 @@
 //! (`Metal/MTLRenderPipeline.hpp`, `MTLComputePipeline.hpp`,
 //! `MTLDepthStencil.hpp`, `MTLVertexDescriptor.hpp`, `MTLBinaryArchive.hpp`).
 
-use crate::{
-    foundation::{NSError, NSString, NSURL},
-    metal::{
-        device::MTLDevice,
-        enums::{
-            MTLBlendFactor, MTLBlendOperation, MTLColorWriteMask, MTLCompareFunction,
-            MTLPrimitiveTopologyClass, MTLShaderValidation, MTLStencilOperation, MTLVertexFormat,
-            MTLVertexStepFunction,
-        },
-        shader::MTLFunction,
-        types::{MTLResourceID, MTLSize},
-    },
-    objc_abi::{
-        NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_stret, send1, send2,
-        {objc_class, sel},
-    },
+use crate::foundation::{NSError, NSString, NSURL};
+use crate::metal::device::MTLDevice;
+use crate::metal::enums::{
+    MTLBlendFactor, MTLBlendOperation, MTLColorWriteMask, MTLCompareFunction,
+    MTLPrimitiveTopologyClass, MTLShaderValidation, MTLStencilOperation, MTLVertexFormat,
+    MTLVertexStepFunction,
 };
+use crate::metal::shader::MTLFunction;
+use crate::metal::types::{MTLResourceID, MTLSize};
+use crate::objc_abi::{
+    NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_stret, send1, send2,
+};
+use crate::objc_abi::{objc_class, sel};
 
 // ---------------------------------------------------------------------------
 // MTL::RenderPipelineDescriptor

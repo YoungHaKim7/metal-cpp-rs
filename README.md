@@ -1,11 +1,3 @@
-<p align="center">
-  <img alt="apple" width=30px src="https://user-images.githubusercontent.com/67513038/210920737-91c0c09a-e8b1-4343-92d5-17db686c2373.png" />
-  <img alt="rust" width=30px src="https://github.com/user-attachments/assets/3489669b-63c0-439e-b507-9b2bfb3fdd5e" />
-  <a href="https://www.rust-lang.org/" rel="nofollow noopener noreferrer">
-    <img src="https://img.shields.io/badge/Rust-1.100+-orange.svg" alt="Rust">
-  </a>
-</p>
-
 # metal-cpp-rs
 
 **ABI-faithful Rust conversion of Apple's
@@ -206,7 +198,31 @@ rustup target add aarch64-apple-darwin
 cargo build --target aarch64-apple-darwin
 ```
 
-## 5. Tests
+## 5. 100 GUI examples
+
+`examples/001_hello_window.rs` … `examples/100_finale.rs` — one hundred
+windowed Metal demos built on the tiny GUI runtime in `examples/gui/`:
+an AppKit window with a layer-hosted `CAMetalLayer`, a hand-pumped
+`nextEventMatchingMask:` event loop, keyboard/mouse input, a 5x7 bitmap
+text renderer, an immediate-mode 2-D vertex pipeline and per-example
+custom Metal shaders (`gui::make_pipeline` / `Frame::draw_custom`).
+Still zero dependencies beyond this crate — ESC or the red close button
+quits any example.
+
+```sh
+cargo run --release --example 001_hello_window    # the hello-world window
+cargo run --release --example 082_tetris          # the app cluster starts at 080
+```
+
+| # | Examples | What they show |
+|---|----------|----------------|
+| 001-020 | hello window, clear color, gradient rect, rainbow triangle, spinning quad, checkerboard, bouncing ball, starfield, plasma, mandelbrot, rings, metaballs, voronoi, tunnel, kaleidoscope, synthwave grid, circle pack, polygons, star polygons, golden spiral | window + primitives + first custom shaders |
+| 021-039 | lissajous, rose curve, superformula, fourier square wave, wave interference, fractal tree, koch snowflake, sierpinski, barnsley fern, dragon IFS, phyllotaxis, superellipse, grid waves, sunburst, hex tiling, flow field, pendulum wave, double pendulum, orbit sim | curves, fractals, physics |
+| 040-059 | particle fountain, fireworks, confetti, galaxy, billiards, asteroids, rain, snowfall, boids, swarm, magnets, mouse trail, paint splatter, gravity wells, flame cursor, ripples, pong, breakout, flappy, runner | particles + interactive toys and mini-games |
+| 060-079 | wolfram rules, langton's ant, brian's brain, cyclic CA, wa-tor, gray-scott reaction-diffusion, forest fire, wave equation, drunkard's walk, truchet tiles, julia, burning ship, newton fractal, moire, raymarched sphere / torus / menger sponge, value noise, fbm terrain, spirograph | cellular automata + raymarching |
+| 080-100 | **calculator, todo app, tetris, snake, game of life**, paint, minesweeper, 2048, analog clock, stopwatch, piano, step sequencer, calendar, text editor, sine plotter, bar chart, mandelbrot explorer, color mixer, maze solver, system info, finale | full GUI apps |
+
+## 6. Tests
 
 `tests/apple_tests.rs` (Apple-only, `#[cfg(target_vendor = "apple")]`):
 NSString/NSArray round-trips, device/queue/command-buffer lifecycle, buffer
@@ -214,7 +230,7 @@ NSString/NSArray round-trips, device/queue/command-buffer lifecycle, buffer
 block ABI, and a 32-byte struct return (`clearColor`) exercising the
 `objc_msgSend_stret` path.
 
-## 6. Safety caveats
+## 7. Safety caveats
 
 * All ObjC calls are `unsafe`; wrapper methods are `unsafe fn` by design
   (`unsafe_op_in_unsafe_fn` is allowed crate-wide — this is a binding layer).
@@ -228,7 +244,7 @@ block ABI, and a 32-byte struct return (`clearColor`) exercising the
   platforms or the framework did not load.
 * If `autoreleasepool`'s closure panics, the pool is not popped.
 
-## 7. Provenance
+## 8. Provenance
 
 Selector strings, enum values and struct layouts were extracted from
 `apple/metal-cpp` `main` (= tag `release/metal-cpp_macOS27.0.1_iOS27.0.1`,
@@ -236,6 +252,3 @@ Selector strings, enum values and struct layouts were extracted from
 definitions), `Foundation/NSPrivate.hpp` (195), `QuartzCore/CAPrivate.hpp`
 (22), and the public class headers. Upstream is Apache-2.0; see
 `LICENSE.txt` in the upstream repository.
-
-# safe rust style
-- https://github.com/gamesir-labs/Metal-Rust

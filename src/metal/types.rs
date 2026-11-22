@@ -4,7 +4,8 @@
 //!
 //! `NS::Range` lives in [`crate::foundation::NSRange`].
 
-use crate::{metal::enums::MTLTextureSwizzle, objc_abi::NSUInteger};
+use crate::metal::enums::MTLTextureSwizzle;
+use crate::objc_abi::NSUInteger;
 
 /// `MTL::Size` — `{ UInteger width; UInteger height; UInteger depth; }`
 /// (24 bytes ⇒ returned via `objc_msgSend_stret` on x86_64).

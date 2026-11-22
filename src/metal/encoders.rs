@@ -5,27 +5,24 @@
 //! All selectors are verbatim from metal-cpp's bridge, e.g.
 //! `setVertexBuffer:offset:atIndex:`, `dispatchThreadgroups:threadsPerThreadgroup:`.
 
-use std::ffi::c_void;
-
-use crate::{
-    foundation::{NSRange, NSString},
-    metal::{
-        device::MTLDevice,
-        enums::{
-            MTLBarrierScope, MTLCullMode, MTLDepthClipMode, MTLDispatchType, MTLIndexType,
-            MTLPrimitiveType, MTLRenderStages, MTLResourceUsage, MTLStages, MTLStoreAction,
-            MTLStoreActionOptions, MTLTriangleFillMode, MTLVisibilityResultMode, MTLWinding,
-        },
-        pipeline::{MTLComputePipelineState, MTLDepthStencilState, MTLRenderPipelineState},
-        resources::{MTLBuffer, MTLHeap, MTLResource, MTLSamplerState, MTLTexture},
-        sync::MTLFence,
-        types::{MTLScissorRect, MTLSize, MTLViewport},
-    },
-    objc_abi::{
-        NSUInteger, Obj, Raw, Ref, Strong, objc_class, sel, send, send1, send2, send3, send4,
-        send5, send6, send7, send8, send9,
-    },
+use crate::foundation::{NSRange, NSString};
+use crate::metal::device::MTLDevice;
+use crate::metal::enums::{
+    MTLBarrierScope, MTLCullMode, MTLDepthClipMode, MTLDispatchType, MTLIndexType,
+    MTLPrimitiveType, MTLRenderStages, MTLResourceUsage, MTLStages, MTLStoreAction,
+    MTLStoreActionOptions, MTLTriangleFillMode, MTLVisibilityResultMode, MTLWinding,
 };
+use crate::metal::pipeline::{
+    MTLComputePipelineState, MTLDepthStencilState, MTLRenderPipelineState,
+};
+use crate::metal::resources::{MTLBuffer, MTLHeap, MTLResource, MTLSamplerState, MTLTexture};
+use crate::metal::sync::MTLFence;
+use crate::metal::types::{MTLScissorRect, MTLSize, MTLViewport};
+use crate::objc_abi::{
+    NSUInteger, Obj, Raw, Ref, Strong, objc_class, sel, send, send1, send2, send3, send4, send5,
+    send6, send7, send8, send9,
+};
+use std::ffi::c_void;
 
 objc_class!(
     /// `MTL::CommandEncoder` — base class of all encoders

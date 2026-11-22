@@ -1,28 +1,25 @@
 //! `MTL::Device` + `MTL::Architecture` (`Metal/MTLDevice.hpp`).
 
-use std::ffi::c_void;
-
-use crate::{
-    blocks::Block2,
-    foundation::{NSArray, NSError, NSString},
-    metal::{
-        command_queue::MTLCommandQueue,
-        enums::{
-            MTLArgumentBuffersTier, MTLCounterSamplingPoint, MTLDeviceLocation, MTLGPUFamily,
-            MTLReadWriteTextureTier, MTLResourceOptions,
-        },
-        pipeline::{MTLComputePipelineState, MTLDepthStencilState, MTLRenderPipelineState},
-        resources::{MTLBuffer, MTLHeap, MTLSamplerState, MTLTexture},
-        shader::{MTLCompileOptions, MTLLibrary},
-        sync::{MTLEvent, MTLFence, MTLSharedEvent},
-        types::{MTLSize, MTLSizeAndAlign, Timestamp},
-    },
-    objc_abi::{
-        NSUInteger, Obj, Raw, Ref, Strong, send, send_bool, send_stret, send1, send1_bool, send2,
-        send3, send4,
-    },
-    objc_abi::{objc_class, sel},
+use crate::blocks::Block2;
+use crate::foundation::{NSArray, NSError, NSString};
+use crate::metal::command_queue::MTLCommandQueue;
+use crate::metal::enums::{
+    MTLArgumentBuffersTier, MTLCounterSamplingPoint, MTLDeviceLocation, MTLGPUFamily,
+    MTLReadWriteTextureTier, MTLResourceOptions,
 };
+use crate::metal::pipeline::{
+    MTLComputePipelineState, MTLDepthStencilState, MTLRenderPipelineState,
+};
+use crate::metal::resources::{MTLBuffer, MTLHeap, MTLSamplerState, MTLTexture};
+use crate::metal::shader::{MTLCompileOptions, MTLLibrary};
+use crate::metal::sync::{MTLEvent, MTLFence, MTLSharedEvent};
+use crate::metal::types::{MTLSize, MTLSizeAndAlign, Timestamp};
+use crate::objc_abi::{
+    NSUInteger, Obj, Raw, Ref, Strong, send, send_bool, send_stret, send1, send1_bool, send2,
+    send3, send4,
+};
+use crate::objc_abi::{objc_class, sel};
+use std::ffi::c_void;
 
 objc_class!(
     /// `MTL::Architecture` — device architecture info.

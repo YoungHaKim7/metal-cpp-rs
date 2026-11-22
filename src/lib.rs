@@ -25,8 +25,8 @@
 //!   metal-cpp headers (e.g. `MTLPixelFormat::PixelFormatBGRA8Unorm = 80`).
 //! * x86_64-specific ABI details are handled: `objc_msgSend_stret` for
 //!   >16-byte struct returns, `objc_msgSend_fpret` for `float` returns, and
-//!   > the `BOOL` type difference between arm64 (`bool`) and x86_64
-//!   > (`signed char`).
+//!   the `BOOL` type difference between arm64 (`bool`) and x86_64
+//!   (`signed char`).
 //! * [`blocks`] implements ObjC **block literals** by hand
 //!   (`_NSConcreteStackBlock`, `_Block_copy`, copy/dispose helpers), which
 //!   enables completion-handler APIs such as `addCompletedHandler:` or
