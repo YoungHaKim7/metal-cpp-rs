@@ -6,3 +6,6 @@
 
 # Rust 코드로 변환하면서 공부
 - https://github.com/YoungHaKim7/macOS_gui_apple_metal_rs/tree/main/001_core-foundation_rs/rust_foundation_tutorials
+
+# macOS커널 공부하기
+- https://younghakim7.github.io/blog/posts/study_macos_kernel_001/
