@@ -1,3 +1,13 @@
+# metal-oxide
+- Rust compute kernels on Apple GPUs: compiles rustc MIR to Metal Shading Language, with typed launches from stable Rust (early alpha)
+- https://github.com/rust-dd/metal-oxide
+
+# compile install
+
+```bash
+xcodebuild -downloadComponent MetalToolchain
+```
+
 # metal파일 컴파일하기
 
 - 예시`.metal`
