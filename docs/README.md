@@ -9,6 +9,11 @@
 ### Apple 오리지날 코드(C++)
 - https://github.com/apple/metal-cpp
 
+# Understanding the metal 4 core API
+- https://developer.apple.com/documentation/metal/understanding-the-metal-4-core-api
+
+<img width="1470" height="392" alt="understanding-the-metal-4-core-api-1~dark" src="https://github.com/user-attachments/assets/c2bf6964-da6a-4113-a30b-b44ff3360a99" />
+
 # Metal LSP
 - https://github.com/computer-graphics-tools/metal-analyzer
 
