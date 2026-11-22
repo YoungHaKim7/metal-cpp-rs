@@ -1,3 +1,8 @@
+# metal doc
+- https://developer.apple.com/documentation/metal
+- C++ 
+  - https://developer.apple.com/metal/cpp/
+
 # 오리지날 코드 공부(C++20)
 - https://github.com/YoungHaKim7/macOS_gui_apple_metal_rs/tree/main/002_Cpp_Metal_Tutorials
 
