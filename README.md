@@ -24,6 +24,11 @@ $ cargo check --all-targets     # works on any host
     Finished `dev` profile (0 errors, 0 warnings)
 ```
 
+# What is metal-cpp?
+
+- [Youtube) WWDC22: Program Metal In C++ with metal cpp | Apple](https://youtu.be/h1mOkhFOSPU?si=u9kC4wrRnAyuTEVH)
+- [(원본)wwdc22에서 Metal-cpp를 통해 C++로 Metal 프로그래밍을(를) 확인하십시오. | Metal-cpp를 통해 C++로 Metal 프로그래밍](https://developer.apple.com/kr/videos/play/wwdc2022/10160)
+
 ---
 
 ## 1. How the conversion works
