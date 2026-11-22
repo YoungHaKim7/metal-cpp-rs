@@ -5,7 +5,7 @@
 //! way metal-cpp declares `objc_msgSend` in its `*_Private.hpp`
 //! implementation branch. There are no third-party dependencies.
 
-use std::ffi::{c_char, c_void, CStr};
+use std::ffi::{CStr, c_char, c_void};
 use std::fmt;
 use std::mem;
 use std::ops::Deref;

@@ -16,7 +16,7 @@ use crate::metal::enums::{
 use crate::metal::shader::MTLFunction;
 use crate::metal::types::{MTLResourceID, MTLSize};
 use crate::objc_abi::{
-    bool_arg, send, send1, send2, send_bool, send_stret, NSUInteger, Obj, Raw, Ref, Strong,
+    NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_stret, send1, send2,
 };
 use crate::objc_abi::{objc_class, sel};
 
@@ -61,7 +61,11 @@ impl MTLRenderPipelineDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setVertexFunction(&self, vertexFunction: Ref<MTLFunction>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setVertexFunction:"), vertexFunction.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setVertexFunction:"),
+            vertexFunction.as_raw(),
+        );
     }
 
     /// `-fragmentFunction` / `-setFragmentFunction:`
@@ -74,7 +78,11 @@ impl MTLRenderPipelineDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setFragmentFunction(&self, fragmentFunction: Ref<MTLFunction>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setFragmentFunction:"), fragmentFunction.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setFragmentFunction:"),
+            fragmentFunction.as_raw(),
+        );
     }
 
     /// `-vertexDescriptor` / `-setVertexDescriptor:`
@@ -87,7 +95,11 @@ impl MTLRenderPipelineDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setVertexDescriptor(&self, vertexDescriptor: Ref<MTLVertexDescriptor>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setVertexDescriptor:"), vertexDescriptor.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setVertexDescriptor:"),
+            vertexDescriptor.as_raw(),
+        );
     }
 
     /// `-colorAttachments`
@@ -121,7 +133,11 @@ impl MTLRenderPipelineDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setRasterSampleCount(&self, rasterSampleCount: NSUInteger) {
-        send1::<NSUInteger, ()>(self.as_raw(), sel!("setRasterSampleCount:"), rasterSampleCount);
+        send1::<NSUInteger, ()>(
+            self.as_raw(),
+            sel!("setRasterSampleCount:"),
+            rasterSampleCount,
+        );
     }
 
     /// `-depthAttachmentPixelFormat` / `-setDepthAttachmentPixelFormat:`
@@ -129,7 +145,10 @@ impl MTLRenderPipelineDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn depthAttachmentPixelFormat(&self) -> crate::metal::enums::MTLPixelFormat {
-        send::<crate::metal::enums::MTLPixelFormat>(self.as_raw(), sel!("depthAttachmentPixelFormat"))
+        send::<crate::metal::enums::MTLPixelFormat>(
+            self.as_raw(),
+            sel!("depthAttachmentPixelFormat"),
+        )
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
@@ -149,7 +168,10 @@ impl MTLRenderPipelineDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn stencilAttachmentPixelFormat(&self) -> crate::metal::enums::MTLPixelFormat {
-        send::<crate::metal::enums::MTLPixelFormat>(self.as_raw(), sel!("stencilAttachmentPixelFormat"))
+        send::<crate::metal::enums::MTLPixelFormat>(
+            self.as_raw(),
+            sel!("stencilAttachmentPixelFormat"),
+        )
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
@@ -173,7 +195,10 @@ impl MTLRenderPipelineDescriptor {
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setInputPrimitiveTopology(&self, inputPrimitiveTopology: MTLPrimitiveTopologyClass) {
+    pub unsafe fn setInputPrimitiveTopology(
+        &self,
+        inputPrimitiveTopology: MTLPrimitiveTopologyClass,
+    ) {
         send1::<MTLPrimitiveTopologyClass, ()>(
             self.as_raw(),
             sel!("setInputPrimitiveTopology:"),
@@ -242,7 +267,11 @@ impl MTLRenderPipelineDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setShaderValidation(&self, shaderValidation: MTLShaderValidation) {
-        send1::<MTLShaderValidation, ()>(self.as_raw(), sel!("setShaderValidation:"), shaderValidation);
+        send1::<MTLShaderValidation, ()>(
+            self.as_raw(),
+            sel!("setShaderValidation:"),
+            shaderValidation,
+        );
     }
 }
 
@@ -389,7 +418,10 @@ impl MTLRenderPipelineColorAttachmentDescriptor {
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setDestinationAlphaBlendFactor(&self, destinationAlphaBlendFactor: MTLBlendFactor) {
+    pub unsafe fn setDestinationAlphaBlendFactor(
+        &self,
+        destinationAlphaBlendFactor: MTLBlendFactor,
+    ) {
         send1::<MTLBlendFactor, ()>(
             self.as_raw(),
             sel!("setDestinationAlphaBlendFactor:"),
@@ -561,7 +593,11 @@ impl MTLComputePipelineDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setComputeFunction(&self, computeFunction: Ref<MTLFunction>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setComputeFunction:"), computeFunction.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setComputeFunction:"),
+            computeFunction.as_raw(),
+        );
     }
 
     /// `-maxTotalThreadsPerThreadgroup` / `-setMaxTotalThreadsPerThreadgroup:`
@@ -573,7 +609,10 @@ impl MTLComputePipelineDescriptor {
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setMaxTotalThreadsPerThreadgroup(&self, maxTotalThreadsPerThreadgroup: NSUInteger) {
+    pub unsafe fn setMaxTotalThreadsPerThreadgroup(
+        &self,
+        maxTotalThreadsPerThreadgroup: NSUInteger,
+    ) {
         send1::<NSUInteger, ()>(
             self.as_raw(),
             sel!("setMaxTotalThreadsPerThreadgroup:"),
@@ -633,7 +672,11 @@ impl MTLComputePipelineDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setShaderValidation(&self, shaderValidation: MTLShaderValidation) {
-        send1::<MTLShaderValidation, ()>(self.as_raw(), sel!("setShaderValidation:"), shaderValidation);
+        send1::<MTLShaderValidation, ()>(
+            self.as_raw(),
+            sel!("setShaderValidation:"),
+            shaderValidation,
+        );
     }
 
     /// `-supportIndirectCommandBuffers` / `-setSupportIndirectCommandBuffers:`
@@ -803,7 +846,10 @@ impl MTLStencilDescriptor {
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setDepthStencilPassOperation(&self, depthStencilPassOperation: MTLStencilOperation) {
+    pub unsafe fn setDepthStencilPassOperation(
+        &self,
+        depthStencilPassOperation: MTLStencilOperation,
+    ) {
         send1::<MTLStencilOperation, ()>(
             self.as_raw(),
             sel!("setDepthStencilPassOperation:"),
@@ -901,7 +947,11 @@ impl MTLDepthStencilDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setFrontFaceStencil(&self, frontFaceStencil: Ref<MTLStencilDescriptor>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setFrontFaceStencil:"), frontFaceStencil.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setFrontFaceStencil:"),
+            frontFaceStencil.as_raw(),
+        );
     }
 
     /// `-backFaceStencil` / `-setBackFaceStencil:`
@@ -914,7 +964,11 @@ impl MTLDepthStencilDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setBackFaceStencil(&self, backFaceStencil: Ref<MTLStencilDescriptor>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setBackFaceStencil:"), backFaceStencil.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setBackFaceStencil:"),
+            backFaceStencil.as_raw(),
+        );
     }
 }
 
@@ -1012,7 +1066,10 @@ impl MTLVertexBufferLayoutDescriptorArray {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn objectAtIndexedSubscript(&self, index: NSUInteger) -> Ref<MTLVertexBufferLayoutDescriptor> {
+    pub unsafe fn objectAtIndexedSubscript(
+        &self,
+        index: NSUInteger,
+    ) -> Ref<MTLVertexBufferLayoutDescriptor> {
         Ref::from_raw(send1::<NSUInteger, Raw>(
             self.as_raw(),
             sel!("objectAtIndexedSubscript:"),
@@ -1094,7 +1151,10 @@ impl MTLVertexAttributeDescriptorArray {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn objectAtIndexedSubscript(&self, index: NSUInteger) -> Ref<MTLVertexAttributeDescriptor> {
+    pub unsafe fn objectAtIndexedSubscript(
+        &self,
+        index: NSUInteger,
+    ) -> Ref<MTLVertexAttributeDescriptor> {
         Ref::from_raw(send1::<NSUInteger, Raw>(
             self.as_raw(),
             sel!("objectAtIndexedSubscript:"),

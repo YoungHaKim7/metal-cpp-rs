@@ -3,7 +3,7 @@
 //! `MTL::FunctionConstantValues` (`Metal/MTLLibrary.hpp`,
 //! `MTLFunctionDescriptor.hpp`, `MTLFunctionConstantValues.hpp`).
 
-use crate::foundation::{NSArray, NSDictionary, NSError, NSString, NSObject};
+use crate::foundation::{NSArray, NSDictionary, NSError, NSObject, NSString};
 use crate::metal::argument::MTLArgumentEncoder;
 use crate::metal::device::MTLDevice;
 use crate::metal::enums::{
@@ -13,7 +13,7 @@ use crate::metal::enums::{
 };
 use crate::metal::types::MTLSize;
 use crate::objc_abi::{
-    bool_arg, send, send1, send2, send3, send_bool, send_stret, NSUInteger, Obj, Raw, Ref, Strong,
+    NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_stret, send1, send2, send3,
 };
 use crate::objc_abi::{objc_class, sel};
 use std::ffi::c_void;
@@ -220,7 +220,10 @@ impl MTLFunction {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn functionConstantsDictionary(&self) -> Ref<NSDictionary<NSString, NSObject>> {
-        Ref::from_raw(send::<Raw>(self.as_raw(), sel!("functionConstantsDictionary")))
+        Ref::from_raw(send::<Raw>(
+            self.as_raw(),
+            sel!("functionConstantsDictionary"),
+        ))
     }
 
     /// `-newArgumentEncoderWithBufferIndex:` (+1 → transferred).
@@ -312,7 +315,11 @@ impl MTLCompileOptions {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setLanguageVersion(&self, languageVersion: MTLLanguageVersion) {
-        send1::<MTLLanguageVersion, ()>(self.as_raw(), sel!("setLanguageVersion:"), languageVersion);
+        send1::<MTLLanguageVersion, ()>(
+            self.as_raw(),
+            sel!("setLanguageVersion:"),
+            languageVersion,
+        );
     }
 
     /// `-libraryType` / `-setLibraryType:`
@@ -382,7 +389,9 @@ impl MTLCompileOptions {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn floatingPointConversionRoundingMode(&self) -> MTLFloatingPointConversionRoundingMode {
+    pub unsafe fn floatingPointConversionRoundingMode(
+        &self,
+    ) -> MTLFloatingPointConversionRoundingMode {
         send::<MTLFloatingPointConversionRoundingMode>(
             self.as_raw(),
             sel!("floatingPointConversionRoundingMode"),
@@ -410,7 +419,10 @@ impl MTLCompileOptions {
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setCompileSymbolVisibility(&self, compileSymbolVisibility: MTLCompileSymbolVisibility) {
+    pub unsafe fn setCompileSymbolVisibility(
+        &self,
+        compileSymbolVisibility: MTLCompileSymbolVisibility,
+    ) {
         send1::<MTLCompileSymbolVisibility, ()>(
             self.as_raw(),
             sel!("setCompileSymbolVisibility:"),
@@ -478,7 +490,10 @@ impl MTLCompileOptions {
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setMaxTotalThreadsPerThreadgroup(&self, maxTotalThreadsPerThreadgroup: NSUInteger) {
+    pub unsafe fn setMaxTotalThreadsPerThreadgroup(
+        &self,
+        maxTotalThreadsPerThreadgroup: NSUInteger,
+    ) {
         send1::<NSUInteger, ()>(
             self.as_raw(),
             sel!("setMaxTotalThreadsPerThreadgroup:"),
@@ -495,8 +510,15 @@ impl MTLCompileOptions {
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setPreprocessorMacros(&self, preprocessorMacros: Ref<NSDictionary<NSString, NSObject>>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setPreprocessorMacros:"), preprocessorMacros.as_raw());
+    pub unsafe fn setPreprocessorMacros(
+        &self,
+        preprocessorMacros: Ref<NSDictionary<NSString, NSObject>>,
+    ) {
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setPreprocessorMacros:"),
+            preprocessorMacros.as_raw(),
+        );
     }
 
     /// `-installName` / `-setInstallName:`
@@ -574,7 +596,11 @@ impl MTLFunctionDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setSpecializedName(&self, specializedName: Ref<NSString>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setSpecializedName:"), specializedName.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setSpecializedName:"),
+            specializedName.as_raw(),
+        );
     }
 
     /// `-options` / `-setOptions:`
@@ -600,7 +626,11 @@ impl MTLFunctionDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setConstantValues(&self, constantValues: Ref<MTLFunctionConstantValues>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setConstantValues:"), constantValues.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setConstantValues:"),
+            constantValues.as_raw(),
+        );
     }
 }
 

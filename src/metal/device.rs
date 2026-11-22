@@ -7,14 +7,16 @@ use crate::metal::enums::{
     MTLArgumentBuffersTier, MTLCounterSamplingPoint, MTLDeviceLocation, MTLGPUFamily,
     MTLReadWriteTextureTier, MTLResourceOptions,
 };
-use crate::metal::pipeline::{MTLComputePipelineState, MTLDepthStencilState, MTLRenderPipelineState};
+use crate::metal::pipeline::{
+    MTLComputePipelineState, MTLDepthStencilState, MTLRenderPipelineState,
+};
 use crate::metal::resources::{MTLBuffer, MTLHeap, MTLSamplerState, MTLTexture};
 use crate::metal::shader::{MTLCompileOptions, MTLLibrary};
 use crate::metal::sync::{MTLEvent, MTLFence, MTLSharedEvent};
 use crate::metal::types::{MTLSize, MTLSizeAndAlign, Timestamp};
 use crate::objc_abi::{
-    send, send1, send1_bool, send2, send3, send4, send_bool, send_stret, NSUInteger, Obj,
-    Raw, Ref, Strong,
+    NSUInteger, Obj, Raw, Ref, Strong, send, send_bool, send_stret, send1, send1_bool, send2,
+    send3, send4,
 };
 use crate::objc_abi::{objc_class, sel};
 use std::ffi::c_void;
@@ -233,7 +235,11 @@ impl MTLDevice {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn sampleTimestamps(&self, cpuTimestamp: &mut Timestamp, gpuTimestamp: &mut Timestamp) {
+    pub unsafe fn sampleTimestamps(
+        &self,
+        cpuTimestamp: &mut Timestamp,
+        gpuTimestamp: &mut Timestamp,
+    ) {
         send2::<*mut Timestamp, *mut Timestamp, ()>(
             self.as_raw(),
             sel!("sampleTimestamps:gpuTimestamp:"),
@@ -257,7 +263,11 @@ impl MTLDevice {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn supportsTextureSampleCount(&self, sampleCount: NSUInteger) -> bool {
-        send1_bool(self.as_raw(), sel!("supportsTextureSampleCount:"), sampleCount)
+        send1_bool(
+            self.as_raw(),
+            sel!("supportsTextureSampleCount:"),
+            sampleCount,
+        )
     }
 
     /// `-supportsRaytracing`
@@ -321,7 +331,10 @@ impl MTLDevice {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn areProgrammableSamplePositionsSupported(&self) -> bool {
-        send_bool(self.as_raw(), sel!("areProgrammableSamplePositionsSupported"))
+        send_bool(
+            self.as_raw(),
+            sel!("areProgrammableSamplePositionsSupported"),
+        )
     }
 
     /// `-areBarycentricCoordsSupported`
@@ -345,7 +358,11 @@ impl MTLDevice {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn supportsCounterSampling(&self, samplingPoint: MTLCounterSamplingPoint) -> bool {
-        send1_bool(self.as_raw(), sel!("supportsCounterSampling:"), samplingPoint)
+        send1_bool(
+            self.as_raw(),
+            sel!("supportsCounterSampling:"),
+            samplingPoint,
+        )
     }
 
     /// `-isDepth24Stencil8PixelFormatSupported`
@@ -495,7 +512,13 @@ impl MTLDevice {
         options: MTLResourceOptions,
         alignment: NSUInteger,
     ) -> Strong<MTLBuffer> {
-        Strong::from_transfer(send4::<*mut c_void, NSUInteger, MTLResourceOptions, NSUInteger, Raw>(
+        Strong::from_transfer(send4::<
+            *mut c_void,
+            NSUInteger,
+            MTLResourceOptions,
+            NSUInteger,
+            Raw,
+        >(
             self.as_raw(),
             sel!("newBufferWithBytesNoCopy:length:options:alignment:deallocator:"),
             pointer,

@@ -8,7 +8,7 @@ use crate::metal::enums::{
 use crate::metal::resources::MTLBuffer;
 use crate::metal::types::{MTLClearColor, MTLSamplePosition};
 use crate::objc_abi::{
-    bool_arg, send, send1, send2, send_bool, send_stret, NSUInteger, Obj, Raw, Ref, Strong,
+    NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_stret, send1, send2,
 };
 use crate::objc_abi::{objc_class, sel};
 
@@ -41,8 +41,15 @@ impl MTLRenderPassAttachmentDescriptor {
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setResolveTexture(&self, resolveTexture: Ref<crate::metal::resources::MTLTexture>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setResolveTexture:"), resolveTexture.as_raw());
+    pub unsafe fn setResolveTexture(
+        &self,
+        resolveTexture: Ref<crate::metal::resources::MTLTexture>,
+    ) {
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setResolveTexture:"),
+            resolveTexture.as_raw(),
+        );
     }
 
     /// `-level` / `-setLevel:`
@@ -120,7 +127,11 @@ impl MTLRenderPassAttachmentDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setResolveDepthPlane(&self, resolveDepthPlane: NSUInteger) {
-        send1::<NSUInteger, ()>(self.as_raw(), sel!("setResolveDepthPlane:"), resolveDepthPlane);
+        send1::<NSUInteger, ()>(
+            self.as_raw(),
+            sel!("setResolveDepthPlane:"),
+            resolveDepthPlane,
+        );
     }
 
     /// `-loadAction` / `-setLoadAction:`
@@ -376,7 +387,11 @@ impl MTLRenderPassDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setRenderTargetWidth(&self, renderTargetWidth: NSUInteger) {
-        send1::<NSUInteger, ()>(self.as_raw(), sel!("setRenderTargetWidth:"), renderTargetWidth);
+        send1::<NSUInteger, ()>(
+            self.as_raw(),
+            sel!("setRenderTargetWidth:"),
+            renderTargetWidth,
+        );
     }
 
     /// `-renderTargetHeight` / `-setRenderTargetHeight:`
@@ -389,7 +404,11 @@ impl MTLRenderPassDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setRenderTargetHeight(&self, renderTargetHeight: NSUInteger) {
-        send1::<NSUInteger, ()>(self.as_raw(), sel!("setRenderTargetHeight:"), renderTargetHeight);
+        send1::<NSUInteger, ()>(
+            self.as_raw(),
+            sel!("setRenderTargetHeight:"),
+            renderTargetHeight,
+        );
     }
 
     /// `-renderTargetArrayLength` / `-setRenderTargetArrayLength:`

@@ -4,7 +4,7 @@
 use crate::foundation::NSString;
 use crate::metal::device::MTLDevice;
 use crate::metal::enums::{MTLBindingAccess, MTLDataType, MTLTextureType};
-use crate::objc_abi::{send, send1, send2, send3, NSUInteger, Obj, Raw, Ref, Strong};
+use crate::objc_abi::{NSUInteger, Obj, Raw, Ref, Strong, send, send1, send2, send3};
 use crate::objc_abi::{objc_class, sel};
 use std::ffi::c_void;
 
@@ -167,7 +167,11 @@ impl MTLArgumentEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setArgumentBuffer(&self, argumentBuffer: Ref<crate::metal::resources::MTLBuffer>, offset: NSUInteger) {
+    pub unsafe fn setArgumentBuffer(
+        &self,
+        argumentBuffer: Ref<crate::metal::resources::MTLBuffer>,
+        offset: NSUInteger,
+    ) {
         send2::<Raw, NSUInteger, ()>(
             self.as_raw(),
             sel!("setArgumentBuffer:offset:"),
@@ -218,7 +222,11 @@ impl MTLArgumentEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setTexture(&self, texture: Ref<crate::metal::resources::MTLTexture>, index: NSUInteger) {
+    pub unsafe fn setTexture(
+        &self,
+        texture: Ref<crate::metal::resources::MTLTexture>,
+        index: NSUInteger,
+    ) {
         send2::<Raw, NSUInteger, ()>(
             self.as_raw(),
             sel!("setTexture:atIndex:"),

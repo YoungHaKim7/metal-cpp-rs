@@ -3,7 +3,7 @@
 
 use crate::foundation::NSString;
 use crate::metal::device::MTLDevice;
-use crate::objc_abi::{objc_class, sel, send, send1, send2, Obj, Raw, Ref};
+use crate::objc_abi::{Obj, Raw, Ref, objc_class, sel, send, send1, send2};
 
 objc_class!(
     /// `MTL::Event` (`Metal/MTLEvent.hpp`).
@@ -60,7 +60,12 @@ impl MTLSharedEvent {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn waitUntilSignaledValue(&self, value: u64, timeoutMS: u64) -> bool {
-        send2_bool_u64(self.as_raw(), sel!("waitUntilSignaledValue:timeoutMS:"), value, timeoutMS)
+        send2_bool_u64(
+            self.as_raw(),
+            sel!("waitUntilSignaledValue:timeoutMS:"),
+            value,
+            timeoutMS,
+        )
     }
 
     /// `-device` (inherited from `MTL::Event`)

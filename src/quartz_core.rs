@@ -10,7 +10,7 @@ use crate::metal::device::MTLDevice;
 use crate::metal::enums::MTLPixelFormat;
 use crate::metal::resources::MTLTexture;
 use crate::objc_abi::{
-    bool_arg, send, send1, send_bool, CGFloat, NSUInteger, Obj, Raw, Ref, Strong,
+    CGFloat, NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send1,
 };
 use crate::objc_abi::{objc_class, sel};
 

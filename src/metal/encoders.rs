@@ -12,11 +12,16 @@ use crate::metal::enums::{
     MTLPrimitiveType, MTLRenderStages, MTLResourceUsage, MTLStages, MTLStoreAction,
     MTLStoreActionOptions, MTLTriangleFillMode, MTLVisibilityResultMode, MTLWinding,
 };
-use crate::metal::pipeline::{MTLComputePipelineState, MTLDepthStencilState, MTLRenderPipelineState};
+use crate::metal::pipeline::{
+    MTLComputePipelineState, MTLDepthStencilState, MTLRenderPipelineState,
+};
 use crate::metal::resources::{MTLBuffer, MTLHeap, MTLResource, MTLSamplerState, MTLTexture};
 use crate::metal::sync::MTLFence;
 use crate::metal::types::{MTLScissorRect, MTLSize, MTLViewport};
-use crate::objc_abi::{objc_class, sel, send, send1, send2, send3, send4, send5, send6, send7, send8, send9, NSUInteger, Obj, Raw, Ref, Strong};
+use crate::objc_abi::{
+    NSUInteger, Obj, Raw, Ref, Strong, objc_class, sel, send, send1, send2, send3, send4, send5,
+    send6, send7, send8, send9,
+};
 use std::ffi::c_void;
 
 objc_class!(
@@ -86,7 +91,11 @@ impl MTLCommandEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn barrierAfterQueueStages(&self, afterQueueStages: MTLStages, beforeStages: MTLStages) {
+    pub unsafe fn barrierAfterQueueStages(
+        &self,
+        afterQueueStages: MTLStages,
+        beforeStages: MTLStages,
+    ) {
         send2::<MTLStages, MTLStages, ()>(
             self.as_raw(),
             sel!("barrierAfterQueueStages:beforeStages:"),
@@ -183,7 +192,6 @@ encoder_base_methods!(MTLParallelRenderCommandEncoder);
 // MTL::RenderCommandEncoder
 // ---------------------------------------------------------------------------
 
-
 objc_class!(
     /// `MTL::RenderCommandEncoder` (`Metal/MTLRenderCommandEncoder.hpp`).
     pub struct MTLRenderCommandEncoder : "MTLRenderCommandEncoder";
@@ -197,14 +205,23 @@ impl MTLRenderCommandEncoder {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setRenderPipelineState(&self, pipelineState: Ref<MTLRenderPipelineState>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setRenderPipelineState:"), pipelineState.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setRenderPipelineState:"),
+            pipelineState.as_raw(),
+        );
     }
 
     /// `-setVertexBuffer:offset:atIndex:`
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setVertexBuffer(&self, buffer: Ref<MTLBuffer>, offset: NSUInteger, index: NSUInteger) {
+    pub unsafe fn setVertexBuffer(
+        &self,
+        buffer: Ref<MTLBuffer>,
+        offset: NSUInteger,
+        index: NSUInteger,
+    ) {
         send3::<Raw, NSUInteger, NSUInteger, ()>(
             self.as_raw(),
             sel!("setVertexBuffer:offset:atIndex:"),
@@ -231,7 +248,12 @@ impl MTLRenderCommandEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setVertexBytes(&self, bytes: *const c_void, length: NSUInteger, index: NSUInteger) {
+    pub unsafe fn setVertexBytes(
+        &self,
+        bytes: *const c_void,
+        length: NSUInteger,
+        index: NSUInteger,
+    ) {
         send3::<*const c_void, NSUInteger, NSUInteger, ()>(
             self.as_raw(),
             sel!("setVertexBytes:length:atIndex:"),
@@ -298,7 +320,12 @@ impl MTLRenderCommandEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setFragmentBuffer(&self, buffer: Ref<MTLBuffer>, offset: NSUInteger, index: NSUInteger) {
+    pub unsafe fn setFragmentBuffer(
+        &self,
+        buffer: Ref<MTLBuffer>,
+        offset: NSUInteger,
+        index: NSUInteger,
+    ) {
         send3::<Raw, NSUInteger, NSUInteger, ()>(
             self.as_raw(),
             sel!("setFragmentBuffer:offset:atIndex:"),
@@ -325,7 +352,12 @@ impl MTLRenderCommandEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setFragmentBytes(&self, bytes: *const c_void, length: NSUInteger, index: NSUInteger) {
+    pub unsafe fn setFragmentBytes(
+        &self,
+        bytes: *const c_void,
+        length: NSUInteger,
+        index: NSUInteger,
+    ) {
         send3::<*const c_void, NSUInteger, NSUInteger, ()>(
             self.as_raw(),
             sel!("setFragmentBytes:length:atIndex:"),
@@ -339,7 +371,12 @@ impl MTLRenderCommandEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setFragmentBuffers(&self, buffers: &[Raw], offsets: &[NSUInteger], range: NSRange) {
+    pub unsafe fn setFragmentBuffers(
+        &self,
+        buffers: &[Raw],
+        offsets: &[NSUInteger],
+        range: NSRange,
+    ) {
         send3::<*const Raw, *const NSUInteger, NSRange, ()>(
             self.as_raw(),
             sel!("setFragmentBuffers:offsets:withRange:"),
@@ -445,7 +482,11 @@ impl MTLRenderCommandEncoder {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setFrontFacingWinding(&self, frontFacingWinding: MTLWinding) {
-        send1::<MTLWinding, ()>(self.as_raw(), sel!("setFrontFacingWinding:"), frontFacingWinding);
+        send1::<MTLWinding, ()>(
+            self.as_raw(),
+            sel!("setFrontFacingWinding:"),
+            frontFacingWinding,
+        );
     }
 
     /// `-setTriangleFillMode:`
@@ -510,7 +551,11 @@ impl MTLRenderCommandEncoder {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setStencilReferenceValue(&self, referenceValue: u32) {
-        send1::<u32, ()>(self.as_raw(), sel!("setStencilReferenceValue:"), referenceValue);
+        send1::<u32, ()>(
+            self.as_raw(),
+            sel!("setStencilReferenceValue:"),
+            referenceValue,
+        );
     }
 
     /// `-setDepthTestMinBound:maxBound:`
@@ -530,7 +575,11 @@ impl MTLRenderCommandEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setVisibilityResultMode(&self, mode: MTLVisibilityResultMode, offset: NSUInteger) {
+    pub unsafe fn setVisibilityResultMode(
+        &self,
+        mode: MTLVisibilityResultMode,
+        offset: NSUInteger,
+    ) {
         send2::<MTLVisibilityResultMode, NSUInteger, ()>(
             self.as_raw(),
             sel!("setVisibilityResultMode:offset:"),
@@ -707,7 +756,9 @@ impl MTLRenderCommandEncoder {
     ) {
         send6::<MTLPrimitiveType, NSUInteger, MTLIndexType, Raw, NSUInteger, NSUInteger, ()>(
             self.as_raw(),
-            sel!("drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:"),
+            sel!(
+                "drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:"
+            ),
             primitiveType,
             indexCount,
             indexType,
@@ -744,7 +795,9 @@ impl MTLRenderCommandEncoder {
             (),
         >(
             self.as_raw(),
-            sel!("drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:baseVertex:baseInstance:"),
+            sel!(
+                "drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:baseVertex:baseInstance:"
+            ),
             primitiveType,
             indexCount,
             indexType,
@@ -772,7 +825,9 @@ impl MTLRenderCommandEncoder {
     ) {
         send7::<NSUInteger, NSUInteger, NSUInteger, Raw, NSUInteger, NSUInteger, NSUInteger, ()>(
             self.as_raw(),
-            sel!("drawPatches:patchStart:patchCount:patchIndexBuffer:patchIndexBufferOffset:instanceCount:baseInstance:"),
+            sel!(
+                "drawPatches:patchStart:patchCount:patchIndexBuffer:patchIndexBufferOffset:instanceCount:baseInstance:"
+            ),
             numberOfPatchControlPoints,
             patchStart,
             patchCount,
@@ -812,7 +867,9 @@ impl MTLRenderCommandEncoder {
             (),
         >(
             self.as_raw(),
-            sel!("drawIndexedPatches:patchStart:patchCount:patchIndexBuffer:patchIndexBufferOffset:controlPointIndexBuffer:controlPointIndexBufferOffset:instanceCount:baseInstance:"),
+            sel!(
+                "drawIndexedPatches:patchStart:patchCount:patchIndexBuffer:patchIndexBufferOffset:controlPointIndexBuffer:controlPointIndexBufferOffset:instanceCount:baseInstance:"
+            ),
             numberOfPatchControlPoints,
             patchStart,
             patchCount,
@@ -1034,7 +1091,11 @@ impl MTLComputeCommandEncoder {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setComputePipelineState(&self, state: Ref<MTLComputePipelineState>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("setComputePipelineState:"), state.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("setComputePipelineState:"),
+            state.as_raw(),
+        );
     }
 
     /// `-setBuffer:offset:atIndex:`
@@ -1173,7 +1234,9 @@ impl MTLComputeCommandEncoder {
     ) {
         send3::<Raw, NSUInteger, MTLSize, ()>(
             self.as_raw(),
-            sel!("dispatchThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerThreadgroup:"),
+            sel!(
+                "dispatchThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerThreadgroup:"
+            ),
             indirectBuffer.as_raw(),
             indirectBufferOffset,
             threadsPerThreadgroup,
@@ -1234,7 +1297,11 @@ impl MTLComputeCommandEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn executeCommandsInBuffer(&self, indirectCommandBuffer: Raw, executionRange: NSRange) {
+    pub unsafe fn executeCommandsInBuffer(
+        &self,
+        indirectCommandBuffer: Raw,
+        executionRange: NSRange,
+    ) {
         send2::<Raw, NSRange, ()>(
             self.as_raw(),
             sel!("executeCommandsInBuffer:withRange:"),
@@ -1297,7 +1364,12 @@ impl MTLComputeCommandEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn useResources(&self, resources: &[Raw], count: NSUInteger, usage: MTLResourceUsage) {
+    pub unsafe fn useResources(
+        &self,
+        resources: &[Raw],
+        count: NSUInteger,
+        usage: MTLResourceUsage,
+    ) {
         send3::<*const Raw, NSUInteger, MTLResourceUsage, ()>(
             self.as_raw(),
             sel!("useResources:count:usage:"),
@@ -1391,7 +1463,9 @@ impl MTLBlitCommandEncoder {
             (),
         >(
             self.as_raw(),
-            sel!("copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:"),
+            sel!(
+                "copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:"
+            ),
             sourceBuffer.as_raw(),
             sourceOffset,
             sourceBytesPerRow,
@@ -1433,7 +1507,9 @@ impl MTLBlitCommandEncoder {
             (),
         >(
             self.as_raw(),
-            sel!("copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:"),
+            sel!(
+                "copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:"
+            ),
             sourceTexture.as_raw(),
             sourceSlice,
             sourceLevel,
@@ -1475,7 +1551,9 @@ impl MTLBlitCommandEncoder {
             (),
         >(
             self.as_raw(),
-            sel!("copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:"),
+            sel!(
+                "copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:"
+            ),
             sourceTexture.as_raw(),
             sourceSlice,
             sourceLevel,
@@ -1492,7 +1570,11 @@ impl MTLBlitCommandEncoder {
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn copyFromTexture(&self, sourceTexture: Ref<MTLTexture>, destinationTexture: Ref<MTLTexture>) {
+    pub unsafe fn copyFromTexture(
+        &self,
+        sourceTexture: Ref<MTLTexture>,
+        destinationTexture: Ref<MTLTexture>,
+    ) {
         send2::<Raw, Raw, ()>(
             self.as_raw(),
             sel!("copyFromTexture:toTexture:"),
@@ -1518,7 +1600,9 @@ impl MTLBlitCommandEncoder {
     ) {
         send8::<Raw, NSUInteger, NSUInteger, Raw, NSUInteger, NSUInteger, NSUInteger, NSUInteger, ()>(
             self.as_raw(),
-            sel!("copyFromTexture:sourceSlice:sourceLevel:toTexture:destinationSlice:destinationLevel:sliceCount:levelCount:"),
+            sel!(
+                "copyFromTexture:sourceSlice:sourceLevel:toTexture:destinationSlice:destinationLevel:sliceCount:levelCount:"
+            ),
             sourceTexture.as_raw(),
             sourceSlice,
             sourceLevel,
@@ -1535,7 +1619,11 @@ impl MTLBlitCommandEncoder {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn generateMipmaps(&self, texture: Ref<MTLTexture>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("generateMipmapsForTexture:"), texture.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("generateMipmapsForTexture:"),
+            texture.as_raw(),
+        );
     }
 
     /// `-synchronizeResource:`
@@ -1543,14 +1631,23 @@ impl MTLBlitCommandEncoder {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn synchronizeResource(&self, resource: Ref<MTLResource>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("synchronizeResource:"), resource.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("synchronizeResource:"),
+            resource.as_raw(),
+        );
     }
 
     /// `-synchronizeTexture:slice:level:`
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn synchronizeTexture(&self, texture: Ref<MTLTexture>, slice: NSUInteger, level: NSUInteger) {
+    pub unsafe fn synchronizeTexture(
+        &self,
+        texture: Ref<MTLTexture>,
+        slice: NSUInteger,
+        level: NSUInteger,
+    ) {
         send3::<Raw, NSUInteger, NSUInteger, ()>(
             self.as_raw(),
             sel!("synchronizeTexture:slice:level:"),
@@ -1579,7 +1676,11 @@ impl MTLBlitCommandEncoder {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn optimizeContentsForGPUAccess(&self, texture: Ref<MTLTexture>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("optimizeContentsForGPUAccess:"), texture.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("optimizeContentsForGPUAccess:"),
+            texture.as_raw(),
+        );
     }
 
     /// `-optimizeContentsForCPUAccess:`
@@ -1587,7 +1688,11 @@ impl MTLBlitCommandEncoder {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn optimizeContentsForCPUAccess(&self, texture: Ref<MTLTexture>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("optimizeContentsForCPUAccess:"), texture.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("optimizeContentsForCPUAccess:"),
+            texture.as_raw(),
+        );
     }
 
     /// `-updateFence:`
@@ -1676,4 +1781,3 @@ impl MTLParallelRenderCommandEncoder {
         send1::<MTLStoreAction, ()>(self.as_raw(), sel!("setStencilStoreAction:"), storeAction);
     }
 }
-

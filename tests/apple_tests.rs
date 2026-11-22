@@ -5,7 +5,6 @@
 //! cargo test --target aarch64-apple-darwin
 //! ```
 #![allow(non_snake_case)]
-
 #![cfg(target_vendor = "apple")]
 
 use metal_cpp_rs::objc_abi::autoreleasepool;
@@ -42,7 +41,10 @@ fn device_is_present_and_queue_works() {
         assert!(!queue.is_nil());
         let cb = queue.commandBuffer();
         assert!(!cb.is_nil());
-        assert_eq!(cb.status(), MTLCommandBufferStatus::CommandBufferStatusNotEnqueued);
+        assert_eq!(
+            cb.status(),
+            MTLCommandBufferStatus::CommandBufferStatusNotEnqueued
+        );
         assert!(!device.name().to_string().is_empty());
         assert!(device.maxBufferLength() > 0);
     });
@@ -69,8 +71,8 @@ fn buffer_contents_roundtrip() {
 #[test]
 fn command_buffer_completed_handler_via_block_abi() {
     autoreleasepool(|| unsafe {
-        use std::sync::atomic::{AtomicU32, Ordering};
         use std::sync::Arc;
+        use std::sync::atomic::{AtomicU32, Ordering};
         let device = MTLCreateSystemDefaultDevice();
         let queue = device.newCommandQueue();
         let cb = queue.commandBuffer();

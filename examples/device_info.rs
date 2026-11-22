@@ -25,7 +25,10 @@ fn main() {
             println!("  isRemovable:                {}", dev.isRemovable());
             println!("  locationNumber:             {}", dev.locationNumber());
             println!("  maxBufferLength:            {}", dev.maxBufferLength());
-            println!("  maxThreadgroupMemoryLength: {}", dev.maxThreadgroupMemoryLength());
+            println!(
+                "  maxThreadgroupMemoryLength: {}",
+                dev.maxThreadgroupMemoryLength()
+            );
 
             let max_threads = dev.maxThreadsPerThreadgroup();
             println!(
@@ -37,8 +40,14 @@ fn main() {
                 "  recommendedMaxWorkingSet:   {}",
                 dev.recommendedMaxWorkingSetSize()
             );
-            println!("  currentAllocatedSize:       {}", dev.currentAllocatedSize());
-            println!("  queryTimestampFrequency:    {}", dev.queryTimestampFrequency());
+            println!(
+                "  currentAllocatedSize:       {}",
+                dev.currentAllocatedSize()
+            );
+            println!(
+                "  queryTimestampFrequency:    {}",
+                dev.queryTimestampFrequency()
+            );
 
             let arch = dev.architecture();
             if !arch.is_nil() {
@@ -62,7 +71,10 @@ fn main() {
 
             println!("  supportsRaytracing:         {}", dev.supportsRaytracing());
             println!("  supports32BitMSAA:          {}", dev.supports32BitMSAA());
-            println!("  supportsBCTextureCompression: {}", dev.supportsBCTextureCompression());
+            println!(
+                "  supportsBCTextureCompression: {}",
+                dev.supportsBCTextureCompression()
+            );
 
             // Exercise a tiny allocation round trip on the first device.
             if i == 0 {

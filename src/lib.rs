@@ -25,8 +25,8 @@
 //!   metal-cpp headers (e.g. `MTLPixelFormat::PixelFormatBGRA8Unorm = 80`).
 //! * x86_64-specific ABI details are handled: `objc_msgSend_stret` for
 //!   >16-byte struct returns, `objc_msgSend_fpret` for `float` returns, and
-//!   the `BOOL` type difference between arm64 (`bool`) and x86_64
-//!   (`signed char`).
+//!   > the `BOOL` type difference between arm64 (`bool`) and x86_64
+//!   > (`signed char`).
 //! * [`blocks`] implements ObjC **block literals** by hand
 //!   (`_NSConcreteStackBlock`, `_Block_copy`, copy/dispose helpers), which
 //!   enables completion-handler APIs such as `addCompletedHandler:` or
@@ -51,7 +51,11 @@
 
 #![allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]
 #![allow(unsafe_op_in_unsafe_fn)]
-#![allow(clippy::too_many_arguments, clippy::missing_safety_doc, clippy::new_without_default)]
+#![allow(
+    clippy::too_many_arguments,
+    clippy::missing_safety_doc,
+    clippy::new_without_default
+)]
 
 pub mod blocks;
 pub mod foundation;
@@ -65,6 +69,6 @@ pub mod prelude {
     pub use crate::blocks::{Block0, Block1, Block2};
     pub use crate::foundation::*;
     pub use crate::metal::*;
-    pub use crate::objc_abi::{autoreleasepool, Class, Obj, Ref, Sel, Strong};
+    pub use crate::objc_abi::{Class, Obj, Ref, Sel, Strong, autoreleasepool};
     pub use crate::quartz_core::*;
 }

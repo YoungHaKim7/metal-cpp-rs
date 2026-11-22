@@ -4,7 +4,7 @@
 use crate::foundation::NSString;
 use crate::metal::command_buffer::{MTLCommandBuffer, MTLCommandBufferDescriptor};
 use crate::metal::device::MTLDevice;
-use crate::objc_abi::{send, send1, NSUInteger, Obj, Raw, Ref, Strong};
+use crate::objc_abi::{NSUInteger, Obj, Raw, Ref, Strong, send, send1};
 use crate::objc_abi::{objc_class, sel};
 
 objc_class!(
@@ -26,7 +26,11 @@ impl MTLCommandQueueDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setMaxCommandBufferCount(&self, maxCommandBufferCount: NSUInteger) {
-        send1::<NSUInteger, ()>(self.as_raw(), sel!("setMaxCommandBufferCount:"), maxCommandBufferCount);
+        send1::<NSUInteger, ()>(
+            self.as_raw(),
+            sel!("setMaxCommandBufferCount:"),
+            maxCommandBufferCount,
+        );
     }
 }
 

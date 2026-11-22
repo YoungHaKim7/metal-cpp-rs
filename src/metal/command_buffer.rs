@@ -13,7 +13,7 @@ use crate::metal::enums::{MTLCommandBufferErrorOption, MTLCommandBufferStatus, M
 use crate::metal::renderpass::MTLRenderPassDescriptor;
 use crate::metal::sync::MTLEvent;
 use crate::objc_abi::{
-    bool_arg, send, send1, send2, send_bool, CFTimeInterval, Obj, Raw, Ref, Strong,
+    CFTimeInterval, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send1, send2,
 };
 use crate::objc_abi::{objc_class, sel};
 

@@ -6,18 +6,16 @@
 use crate::foundation::{NSRange, NSString};
 use crate::metal::device::MTLDevice;
 use crate::metal::enums::{
-    MTLBufferSparseTier, MTLCPUCacheMode, MTLHazardTrackingMode,
-    MTLHeapType, MTLPixelFormat, MTLPurgeableState, MTLResourceOptions,
-    MTLSamplerAddressMode, MTLSamplerBorderColor, MTLSamplerMinMagFilter, MTLSamplerMipFilter,
-    MTLSamplerReductionMode, MTLSparsePageSize, MTLStorageMode, MTLTextureCompressionType,
-    MTLTextureSparseTier, MTLTextureType, MTLTextureUsage,
+    MTLBufferSparseTier, MTLCPUCacheMode, MTLHazardTrackingMode, MTLHeapType, MTLPixelFormat,
+    MTLPurgeableState, MTLResourceOptions, MTLSamplerAddressMode, MTLSamplerBorderColor,
+    MTLSamplerMinMagFilter, MTLSamplerMipFilter, MTLSamplerReductionMode, MTLSparsePageSize,
+    MTLStorageMode, MTLTextureCompressionType, MTLTextureSparseTier, MTLTextureType,
+    MTLTextureUsage,
 };
-use crate::metal::types::{
-    GPUAddress, MTLRegion, MTLResourceID, MTLTextureSwizzleChannels,
-};
+use crate::metal::types::{GPUAddress, MTLRegion, MTLResourceID, MTLTextureSwizzleChannels};
 use crate::objc_abi::{
-    bool_arg, send, send1, send2, send3, send4, send6, send_bool, send_f32, NSUInteger,
-    Obj, Raw, Ref, Strong,
+    NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_f32, send1, send2, send3,
+    send4, send6,
 };
 use crate::objc_abi::{objc_class, sel};
 use std::ffi::c_void;
@@ -214,7 +212,12 @@ impl MTLBuffer {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn addDebugMarker(&self, marker: Ref<NSString>, range: NSRange) {
-        send2::<Raw, NSRange, ()>(self.as_raw(), sel!("addDebugMarker:range:"), marker.as_raw(), range);
+        send2::<Raw, NSRange, ()>(
+            self.as_raw(),
+            sel!("addDebugMarker:range:"),
+            marker.as_raw(),
+            range,
+        );
     }
 
     /// `-removeAllDebugMarkers`
@@ -492,14 +495,16 @@ impl MTLTexture {
         levelRange: NSRange,
         sliceRange: NSRange,
     ) -> Strong<MTLTexture> {
-        Strong::from_transfer(send4::<MTLPixelFormat, MTLTextureType, NSRange, NSRange, Raw>(
-            self.as_raw(),
-            sel!("newTextureViewWithPixelFormat:textureType:levels:slices:"),
-            pixelFormat,
-            textureType,
-            levelRange,
-            sliceRange,
-        ))
+        Strong::from_transfer(
+            send4::<MTLPixelFormat, MTLTextureType, NSRange, NSRange, Raw>(
+                self.as_raw(),
+                sel!("newTextureViewWithPixelFormat:textureType:levels:slices:"),
+                pixelFormat,
+                textureType,
+                levelRange,
+                sliceRange,
+            ),
+        )
     }
 
     /// `-parentTexture`
@@ -588,7 +593,13 @@ impl MTLTextureDescriptor {
         height: NSUInteger,
         mipmapped: bool,
     ) -> Strong<MTLTextureDescriptor> {
-        Strong::from_retain(send4::<MTLPixelFormat, NSUInteger, NSUInteger, crate::objc_abi::ObjBOOL, Raw>(
+        Strong::from_retain(send4::<
+            MTLPixelFormat,
+            NSUInteger,
+            NSUInteger,
+            crate::objc_abi::ObjBOOL,
+            Raw,
+        >(
             Self::class_ptr().ptr(),
             sel!("texture2DDescriptorWithPixelFormat:width:height:mipmapped:"),
             pixelFormat,
@@ -608,7 +619,13 @@ impl MTLTextureDescriptor {
         resourceOptions: MTLResourceOptions,
         usage: MTLTextureUsage,
     ) -> Strong<MTLTextureDescriptor> {
-        Strong::from_retain(send4::<MTLPixelFormat, NSUInteger, MTLResourceOptions, MTLTextureUsage, Raw>(
+        Strong::from_retain(send4::<
+            MTLPixelFormat,
+            NSUInteger,
+            MTLResourceOptions,
+            MTLTextureUsage,
+            Raw,
+        >(
             Self::class_ptr().ptr(),
             sel!("textureBufferDescriptorWithPixelFormat:width:resourceOptions:usage:"),
             pixelFormat,
@@ -627,7 +644,12 @@ impl MTLTextureDescriptor {
         size: NSUInteger,
         mipmapped: bool,
     ) -> Strong<MTLTextureDescriptor> {
-        Strong::from_retain(send3::<MTLPixelFormat, NSUInteger, crate::objc_abi::ObjBOOL, Raw>(
+        Strong::from_retain(send3::<
+            MTLPixelFormat,
+            NSUInteger,
+            crate::objc_abi::ObjBOOL,
+            Raw,
+        >(
             Self::class_ptr().ptr(),
             sel!("textureCubeDescriptorWithPixelFormat:size:mipmapped:"),
             pixelFormat,
@@ -698,7 +720,11 @@ impl MTLTextureDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setMipmapLevelCount(&self, mipmapLevelCount: NSUInteger) {
-        send1::<NSUInteger, ()>(self.as_raw(), sel!("setMipmapLevelCount:"), mipmapLevelCount);
+        send1::<NSUInteger, ()>(
+            self.as_raw(),
+            sel!("setMipmapLevelCount:"),
+            mipmapLevelCount,
+        );
     }
 
     /// `-sampleCount` / `-setSampleCount:`
@@ -793,7 +819,11 @@ impl MTLTextureDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setResourceOptions(&self, resourceOptions: MTLResourceOptions) {
-        send1::<MTLResourceOptions, ()>(self.as_raw(), sel!("setResourceOptions:"), resourceOptions);
+        send1::<MTLResourceOptions, ()>(
+            self.as_raw(),
+            sel!("setResourceOptions:"),
+            resourceOptions,
+        );
     }
 
     /// `-usage` / `-setUsage:`
@@ -1025,7 +1055,11 @@ impl MTLSamplerDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setLodAverage(&self, lodAverage: bool) {
-        send1::<crate::objc_abi::ObjBOOL, ()>(self.as_raw(), sel!("setLodAverage:"), bool_arg(lodAverage));
+        send1::<crate::objc_abi::ObjBOOL, ()>(
+            self.as_raw(),
+            sel!("setLodAverage:"),
+            bool_arg(lodAverage),
+        );
     }
 
     /// `-normalizedCoordinates` / `-setNormalizedCoordinates:`
@@ -1054,7 +1088,10 @@ impl MTLSamplerDescriptor {
     }
     /// # Safety
     /// Calls into the Objective-C runtime.
-    pub unsafe fn setCompareFunction(&self, compareFunction: crate::metal::enums::MTLCompareFunction) {
+    pub unsafe fn setCompareFunction(
+        &self,
+        compareFunction: crate::metal::enums::MTLCompareFunction,
+    ) {
         send1::<crate::metal::enums::MTLCompareFunction, ()>(
             self.as_raw(),
             sel!("setCompareFunction:"),
@@ -1085,7 +1122,11 @@ impl MTLSamplerDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setReductionMode(&self, reductionMode: MTLSamplerReductionMode) {
-        send1::<MTLSamplerReductionMode, ()>(self.as_raw(), sel!("setReductionMode:"), reductionMode);
+        send1::<MTLSamplerReductionMode, ()>(
+            self.as_raw(),
+            sel!("setReductionMode:"),
+            reductionMode,
+        );
     }
 
     /// `-supportArgumentBuffers` / `-setSupportArgumentBuffers:`
@@ -1239,7 +1280,11 @@ impl MTLHeapDescriptor {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setResourceOptions(&self, resourceOptions: MTLResourceOptions) {
-        send1::<MTLResourceOptions, ()>(self.as_raw(), sel!("setResourceOptions:"), resourceOptions);
+        send1::<MTLResourceOptions, ()>(
+            self.as_raw(),
+            sel!("setResourceOptions:"),
+            resourceOptions,
+        );
     }
 }
 

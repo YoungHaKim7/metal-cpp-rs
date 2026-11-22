@@ -11,7 +11,6 @@
 use metal_cpp_rs::objc_abi::autoreleasepool;
 use metal_cpp_rs::prelude::*;
 
-
 const SHADER_SOURCE: &str = r#"
 #include <metal_stdlib>
 using namespace metal;
@@ -154,7 +153,12 @@ fn main() {
         let src = shared_buffer.contents();
         std::fs::write(
             "triangle.ppm",
-            build_ppm(src as *const u8, bytes_per_row as usize, WIDTH as usize, HEIGHT as usize),
+            build_ppm(
+                src as *const u8,
+                bytes_per_row as usize,
+                WIDTH as usize,
+                HEIGHT as usize,
+            ),
         )
         .expect("write triangle.ppm");
         println!("wrote triangle.ppm ({}x{})", WIDTH, HEIGHT);
@@ -169,22 +173,22 @@ unsafe fn command_buffer_after_(
     texture: Ref<MTLTexture>,
 ) {
     unsafe {
-    let cb = queue.commandBuffer();
-    let blit = cb.blitCommandEncoder();
-    blit.copyFromTextureToBuffer(
-        texture,
-        0, // sourceSlice
-        0, // sourceLevel
-        MTLOrigin::Make(0, 0, 0),
-        MTLSize::Make(WIDTH, HEIGHT, 1),
-        shared_buffer,
-        0, // destinationOffset
-        WIDTH * 4, // destinationBytesPerRow
-        WIDTH * 4 * HEIGHT, // destinationBytesPerImage
-    );
-    blit.endEncoding();
-    cb.commit();
-    cb.waitUntilCompleted();
+        let cb = queue.commandBuffer();
+        let blit = cb.blitCommandEncoder();
+        blit.copyFromTextureToBuffer(
+            texture,
+            0, // sourceSlice
+            0, // sourceLevel
+            MTLOrigin::Make(0, 0, 0),
+            MTLSize::Make(WIDTH, HEIGHT, 1),
+            shared_buffer,
+            0,                  // destinationOffset
+            WIDTH * 4,          // destinationBytesPerRow
+            WIDTH * 4 * HEIGHT, // destinationBytesPerImage
+        );
+        blit.endEncoding();
+        cb.commit();
+        cb.waitUntilCompleted();
     }
 }
 

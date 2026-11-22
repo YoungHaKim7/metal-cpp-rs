@@ -20,7 +20,11 @@ pub struct MTLSize {
 impl MTLSize {
     /// `MTL::Size::Make(width, height, depth)`.
     pub fn Make(width: NSUInteger, height: NSUInteger, depth: NSUInteger) -> Self {
-        MTLSize { width, height, depth }
+        MTLSize {
+            width,
+            height,
+            depth,
+        }
     }
 }
 
@@ -51,12 +55,18 @@ pub struct MTLRegion {
 impl MTLRegion {
     /// `MTL::Region::Make1D(x, width)`.
     pub fn Make1D(x: NSUInteger, width: NSUInteger) -> Self {
-        MTLRegion { origin: MTLOrigin::Make(x, 0, 0), size: MTLSize::Make(width, 1, 1) }
+        MTLRegion {
+            origin: MTLOrigin::Make(x, 0, 0),
+            size: MTLSize::Make(width, 1, 1),
+        }
     }
 
     /// `MTL::Region::Make2D(x, y, width, height)`.
     pub fn Make2D(x: NSUInteger, y: NSUInteger, width: NSUInteger, height: NSUInteger) -> Self {
-        MTLRegion { origin: MTLOrigin::Make(x, y, 0), size: MTLSize::Make(width, height, 1) }
+        MTLRegion {
+            origin: MTLOrigin::Make(x, y, 0),
+            size: MTLSize::Make(width, height, 1),
+        }
     }
 
     /// `MTL::Region::Make3D(x, y, z, width, height, depth)`.
@@ -68,7 +78,10 @@ impl MTLRegion {
         height: NSUInteger,
         depth: NSUInteger,
     ) -> Self {
-        MTLRegion { origin: MTLOrigin::Make(x, y, z), size: MTLSize::Make(width, height, depth) }
+        MTLRegion {
+            origin: MTLOrigin::Make(x, y, z),
+            size: MTLSize::Make(width, height, depth),
+        }
     }
 }
 
@@ -113,7 +126,12 @@ pub struct MTLClearColor {
 impl MTLClearColor {
     /// `MTL::ClearColor::Make(red, green, blue, alpha)`.
     pub fn Make(red: f64, green: f64, blue: f64, alpha: f64) -> Self {
-        MTLClearColor { red, green, blue, alpha }
+        MTLClearColor {
+            red,
+            green,
+            blue,
+            alpha,
+        }
     }
 }
 
@@ -132,8 +150,22 @@ pub struct MTLViewport {
 
 impl MTLViewport {
     /// `MTL::Viewport::Make(originX, originY, width, height, znear, zfar)`.
-    pub fn Make(originX: f64, originY: f64, width: f64, height: f64, znear: f64, zfar: f64) -> Self {
-        MTLViewport { originX, originY, width, height, znear, zfar }
+    pub fn Make(
+        originX: f64,
+        originY: f64,
+        width: f64,
+        height: f64,
+        znear: f64,
+        zfar: f64,
+    ) -> Self {
+        MTLViewport {
+            originX,
+            originY,
+            width,
+            height,
+            znear,
+            zfar,
+        }
     }
 }
 
@@ -150,7 +182,12 @@ pub struct MTLScissorRect {
 impl MTLScissorRect {
     /// `MTL::ScissorRect::Make(x, y, width, height)`.
     pub fn Make(x: NSUInteger, y: NSUInteger, width: NSUInteger, height: NSUInteger) -> Self {
-        MTLScissorRect { x, y, width, height }
+        MTLScissorRect {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 }
 
@@ -178,8 +215,18 @@ impl Default for MTLTextureSwizzleChannels {
 
 impl MTLTextureSwizzleChannels {
     /// `MTL::TextureSwizzleChannels::Make(r, g, b, a)`.
-    pub fn Make(red: MTLTextureSwizzle, green: MTLTextureSwizzle, blue: MTLTextureSwizzle, alpha: MTLTextureSwizzle) -> Self {
-        MTLTextureSwizzleChannels { red, green, blue, alpha }
+    pub fn Make(
+        red: MTLTextureSwizzle,
+        green: MTLTextureSwizzle,
+        blue: MTLTextureSwizzle,
+        alpha: MTLTextureSwizzle,
+    ) -> Self {
+        MTLTextureSwizzleChannels {
+            red,
+            green,
+            blue,
+            alpha,
+        }
     }
 }
 

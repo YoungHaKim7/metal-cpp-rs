@@ -6,7 +6,9 @@ use crate::foundation::{NSError, NSString, NSURL};
 use crate::metal::command_queue::MTLCommandQueue;
 use crate::metal::device::MTLDevice;
 use crate::metal::enums::MTLCaptureDestination;
-use crate::objc_abi::{objc_class, sel, send, send1, send1_bool, send2, send_bool, Obj, Raw, Ref, Strong};
+use crate::objc_abi::{
+    Obj, Raw, Ref, Strong, objc_class, sel, send, send_bool, send1, send1_bool, send2,
+};
 
 objc_class!(
     /// `MTL::CaptureDescriptor` (`Metal/MTLCaptureManager.hpp`).
@@ -171,7 +173,11 @@ impl MTLCaptureManager {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn startCaptureWithDevice(&self, device: Ref<MTLDevice>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("startCaptureWithDevice:"), device.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("startCaptureWithDevice:"),
+            device.as_raw(),
+        );
     }
 
     /// `-startCaptureWithCommandQueue:`
@@ -179,7 +185,11 @@ impl MTLCaptureManager {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn startCaptureWithCommandQueue(&self, commandQueue: Ref<MTLCommandQueue>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("startCaptureWithCommandQueue:"), commandQueue.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("startCaptureWithCommandQueue:"),
+            commandQueue.as_raw(),
+        );
     }
 
     /// `-startCaptureWithScope:`
@@ -187,7 +197,11 @@ impl MTLCaptureManager {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn startCaptureWithScope(&self, captureScope: Ref<MTLCaptureScope>) {
-        send1::<Raw, ()>(self.as_raw(), sel!("startCaptureWithScope:"), captureScope.as_raw());
+        send1::<Raw, ()>(
+            self.as_raw(),
+            sel!("startCaptureWithScope:"),
+            captureScope.as_raw(),
+        );
     }
 
     /// `-startCaptureWithDescriptor:error:` — returns success.

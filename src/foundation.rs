@@ -8,13 +8,13 @@
 //! `Foundation/NSPrivate.hpp` selector table (e.g. `UTF8String`,
 //! `stringWithCString:encoding:`, `addObserverForName:object:queue:usingBlock:`).
 
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 use std::marker::PhantomData;
 
 use crate::blocks::Block1;
 use crate::objc_abi::{
-    bool_arg, send, send1, send1_bool, send2, send3, send4, send_bool, send_stret, NSUInteger,
-    Obj, Raw, Ref, Strong, NSInteger, CFTimeInterval,
+    CFTimeInterval, NSInteger, NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool,
+    send_stret, send1, send1_bool, send2, send3, send4,
 };
 use crate::objc_abi::{class, objc_class, sel};
 
@@ -409,7 +409,11 @@ impl<T: Obj> NSArray<T> {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn objectAtIndex(&self, index: NSUInteger) -> Ref<T> {
-        Ref::from_raw(send1::<NSUInteger, Raw>(self.0, sel!("objectAtIndex:"), index))
+        Ref::from_raw(send1::<NSUInteger, Raw>(
+            self.0,
+            sel!("objectAtIndex:"),
+            index,
+        ))
     }
 }
 
@@ -467,7 +471,11 @@ impl<K: Obj, V: Obj> NSDictionary<K, V> {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn objectForKey(&self, key: &K) -> Ref<V> {
-        Ref::from_raw(send1::<Raw, Raw>(self.0, sel!("objectForKey:"), key.as_raw()))
+        Ref::from_raw(send1::<Raw, Raw>(
+            self.0,
+            sel!("objectForKey:"),
+            key.as_raw(),
+        ))
     }
 }
 
@@ -584,7 +592,10 @@ impl NSProcessInfo {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn processInfo() -> Strong<NSProcessInfo> {
-        Strong::from_retain(send::<Raw>(NSProcessInfo::class().ptr(), sel!("processInfo")))
+        Strong::from_retain(send::<Raw>(
+            NSProcessInfo::class().ptr(),
+            sel!("processInfo"),
+        ))
     }
 
     /// `-operatingSystemVersion` — returns `NS::OperatingSystemVersion`
@@ -601,7 +612,10 @@ impl NSProcessInfo {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn operatingSystemVersionString(&self) -> Ref<NSString> {
-        Ref::from_raw(send::<Raw>(self.as_raw(), sel!("operatingSystemVersionString")))
+        Ref::from_raw(send::<Raw>(
+            self.as_raw(),
+            sel!("operatingSystemVersionString"),
+        ))
     }
 
     /// `-processorCount`
@@ -938,7 +952,10 @@ impl NSError {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn localizedRecoverySuggestion(&self) -> Ref<NSString> {
-        Ref::from_raw(send::<Raw>(self.as_raw(), sel!("localizedRecoverySuggestion")))
+        Ref::from_raw(send::<Raw>(
+            self.as_raw(),
+            sel!("localizedRecoverySuggestion"),
+        ))
     }
 }
 
