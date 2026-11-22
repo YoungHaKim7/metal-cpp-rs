@@ -1,16 +1,20 @@
 //! Render-pass descriptors — `MTL::RenderPassDescriptor` and the attachment
 //! descriptor family (`Metal/MTLRenderPass.hpp`).
 
-use crate::metal::enums::{
-    MTLLoadAction, MTLMultisampleDepthResolveFilter, MTLMultisampleStencilResolveFilter,
-    MTLStoreAction, MTLStoreActionOptions, MTLVisibilityResultType,
+use crate::{
+    metal::{
+        enums::{
+            MTLLoadAction, MTLMultisampleDepthResolveFilter, MTLMultisampleStencilResolveFilter,
+            MTLStoreAction, MTLStoreActionOptions, MTLVisibilityResultType,
+        },
+        resources::MTLBuffer,
+        types::{MTLClearColor, MTLSamplePosition},
+    },
+    objc_abi::{
+        NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_stret, send1, send2,
+        {objc_class, sel},
+    },
 };
-use crate::metal::resources::MTLBuffer;
-use crate::metal::types::{MTLClearColor, MTLSamplePosition};
-use crate::objc_abi::{
-    NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send_stret, send1, send2,
-};
-use crate::objc_abi::{objc_class, sel};
 
 objc_class!(
     /// `MTL::RenderPassAttachmentDescriptor` — base of color/depth/stencil

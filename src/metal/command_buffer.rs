@@ -1,21 +1,25 @@
 //! `MTL::CommandBuffer` + `MTL::CommandBufferDescriptor`
 //! (`Metal/MTLCommandBuffer.hpp`).
 
-use crate::blocks::Block1;
-use crate::foundation::{NSError, NSString};
-use crate::metal::command_queue::MTLCommandQueue;
-use crate::metal::device::MTLDevice;
-use crate::metal::encoders::{
-    MTLBlitCommandEncoder, MTLComputeCommandEncoder, MTLParallelRenderCommandEncoder,
-    MTLRenderCommandEncoder,
+use crate::{
+    blocks::Block1,
+    foundation::{NSError, NSString},
+    metal::{
+        command_queue::MTLCommandQueue,
+        device::MTLDevice,
+        encoders::{
+            MTLBlitCommandEncoder, MTLComputeCommandEncoder, MTLParallelRenderCommandEncoder,
+            MTLRenderCommandEncoder,
+        },
+        enums::{MTLCommandBufferErrorOption, MTLCommandBufferStatus, MTLDispatchType},
+        renderpass::MTLRenderPassDescriptor,
+        sync::MTLEvent,
+    },
+    objc_abi::{
+        CFTimeInterval, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send1, send2,
+        {objc_class, sel},
+    },
 };
-use crate::metal::enums::{MTLCommandBufferErrorOption, MTLCommandBufferStatus, MTLDispatchType};
-use crate::metal::renderpass::MTLRenderPassDescriptor;
-use crate::metal::sync::MTLEvent;
-use crate::objc_abi::{
-    CFTimeInterval, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send1, send2,
-};
-use crate::objc_abi::{objc_class, sel};
 
 objc_class!(
     /// `MTL::CommandBufferDescriptor`.

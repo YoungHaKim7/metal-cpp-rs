@@ -6,13 +6,13 @@
 //! Note: `CAMetalDrawable` is an Objective-C *protocol* — you never create
 //! one; you receive instances from [`CAMetalLayer::nextDrawable`].
 
-use crate::metal::device::MTLDevice;
-use crate::metal::enums::MTLPixelFormat;
-use crate::metal::resources::MTLTexture;
-use crate::objc_abi::{
-    CGFloat, NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send1,
+use crate::{
+    metal::{device::MTLDevice, enums::MTLPixelFormat, resources::MTLTexture},
+    objc_abi::{
+        {CGFloat, NSUInteger, Obj, Raw, Ref, Strong, bool_arg, send, send_bool, send1},
+        {objc_class, sel},
+    },
 };
-use crate::objc_abi::{objc_class, sel};
 
 /// `CGSize` from the system `CoreGraphics/CGGeometry.h` — `CGFloat` is
 /// `double` on 64-bit Apple platforms (16 bytes; returned in registers, so

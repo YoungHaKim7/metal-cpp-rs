@@ -1,9 +1,11 @@
 //! Synchronization — `MTL::Event`, `MTL::SharedEvent`, `MTL::Fence`
 //! (`Metal/MTLEvent.hpp`, `Metal/MTLFence.hpp`).
 
-use crate::foundation::NSString;
-use crate::metal::device::MTLDevice;
-use crate::objc_abi::{Obj, Raw, Ref, objc_class, sel, send, send1, send2};
+use crate::{
+    foundation::NSString,
+    metal::device::MTLDevice,
+    objc_abi::{Obj, Raw, Ref, objc_class, sel, send, send1, send2},
+};
 
 objc_class!(
     /// `MTL::Event` (`Metal/MTLEvent.hpp`).

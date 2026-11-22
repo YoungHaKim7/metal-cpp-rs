@@ -2,12 +2,10 @@
 //! `MTL::CaptureScope` (`Metal/MTLCaptureManager.hpp`,
 //! `Metal/MTLCaptureScope.hpp`).
 
-use crate::foundation::{NSError, NSString, NSURL};
-use crate::metal::command_queue::MTLCommandQueue;
-use crate::metal::device::MTLDevice;
-use crate::metal::enums::MTLCaptureDestination;
-use crate::objc_abi::{
-    Obj, Raw, Ref, Strong, objc_class, sel, send, send_bool, send1, send1_bool, send2,
+use crate::{
+    foundation::{NSError, NSString, NSURL},
+    metal::{command_queue::MTLCommandQueue, device::MTLDevice, enums::MTLCaptureDestination},
+    objc_abi::{Obj, Raw, Ref, Strong, objc_class, sel, send, send_bool, send1, send1_bool, send2},
 };
 
 objc_class!(
