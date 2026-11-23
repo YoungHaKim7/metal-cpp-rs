@@ -1,0 +1,15 @@
+[package]
+name = "learn-metal-rust"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100.0"
+publish = false
+description = "10 runnable Rust examples for the metal-rust crate (Apple Metal)."
+
+[workspace]
+members = ["examples/*"]
+
+[dependencies]
+metal_cpp_rs = { path = "../../../metal-cpp-rs"}
+
+
