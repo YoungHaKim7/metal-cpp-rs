@@ -33,15 +33,15 @@ $ cargo check --all-targets     # works on any host
 
 # 고쳐야할것
 - examples 
-  - [ ] 001_hello_window.rs
+  - [x] 001_hello_window.rs
     - 창은 나오지만 글씨가 나오지 않음
-	- [ ] 002_clear_color.rs
+  - [-] 002_clear_color.rs
     - 컬러는 나옴
-	- [ ] 003_gradient_rect.rs
+  - [ ] 003_gradient_rect.rs
 	  - 점검중.
-	- [ ] 004_rainbow_triangle.rs
+  - [ ] 004_rainbow_triangle.rs
 	  - 점검중.
-	- [ ] 005_spinning_quad.rs
+  - [ ] 005_spinning_quad.rs
 
   - [ ] 006_checkerboard.rs
 	
