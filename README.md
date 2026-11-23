@@ -37,38 +37,24 @@ $ cargo check --all-targets     # works on any host
 - examples 
   - [x] 001_hello_window.rs
     - 창은 나오지만 글씨가 나오지 않음
-  - [-] 002_clear_color.rs
+  - [ ] 002_clear_color.rs
     - 컬러는 나옴
   - [ ] 003_gradient_rect.rs
 	  - 점검중.
   - [ ] 004_rainbow_triangle.rs
 	  - 점검중.
   - [ ] 005_spinning_quad.rs
-
+	  - 점검중.
   - [ ] 006_checkerboard.rs
-	
-	
-yesterday
-007_bouncing_ball.rs
-	
-examples ++
-	
-yesterday
-008_starfield.rs
-	
-examples ++
-	
-yesterday
-009_plasma.rs
-	
-examples ++
-	
-yesterday
-010_mandelbrot.rs
-	
-examples ++
-	
-yesterday
+	  - 점검중.	
+  - [ ] 007_bouncing_ball.rs
+	  - 점검중.	
+  - [ ] 008_starfield.rs
+	  - 점검중.
+  - [ ] 009_plasma.rs
+	  - 점검중.
+  - [ ] 010_mandelbrot.rs
+
 011_rings.rs
 	
 examples ++
