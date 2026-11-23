@@ -551,11 +551,22 @@ impl Frame {
                 let bits = rows[row];
                 for col in 0..5usize {
                     if bits & (1 << (4 - col)) != 0 {
-                        self.text_verts.push(Vertex::new(
-                            cx + col as f32 * size,
-                            y + row as f32 * size,
-                            color,
-                        ));
+                        // FIX: each lit font pixel must be a filled quad
+                        // (2 triangles = 6 vertices) covering its `size x size`
+                        // cell. The old code pushed a single vertex per lit
+                        // pixel, so triangle-list rasterisation grouped
+                        // arbitrary triples of pixels into garbage triangles
+                        // instead of glyphs.
+                        let px = cx + col as f32 * size;
+                        let py = y + row as f32 * size;
+                        let qx = px + size;
+                        let qy = py + size;
+                        self.text_verts.push(Vertex::new(px, py, color));
+                        self.text_verts.push(Vertex::new(qx, py, color));
+                        self.text_verts.push(Vertex::new(px, qy, color));
+                        self.text_verts.push(Vertex::new(qx, py, color));
+                        self.text_verts.push(Vertex::new(qx, qy, color));
+                        self.text_verts.push(Vertex::new(px, qy, color));
                     }
                 }
             }
@@ -921,7 +932,10 @@ impl App {
             verts: Vec::with_capacity(4096),
             customs: Vec::new(),
             pending_uniforms: Vec::new(),
-            text_verts: Vec::with_capacity(2048),
+            // Text now emits 6 vertices per lit 5x7 font pixel, so a typical
+            // caption needs a few thousand vertices — start with enough
+            // capacity to avoid reallocating every frame.
+            text_verts: Vec::with_capacity(8192),
             height_points: self.height_points,
         }
     }
@@ -990,6 +1004,12 @@ impl App {
         if !frame.verts.is_empty() {
             encoder.setRenderPipelineState(self.default_pso.as_ref());
             encoder.setVertexBuffer(self.vertex_buffer.as_ref(), 0, 0);
+            // FIX: the default shader's vertex function reads
+            // `constant float4* uniforms [[buffer(1)]]` (screen size for the
+            // pixel -> NDC conversion). Without this binding the uniform
+            // buffer is unbound at the vertex stage, every position computes
+            // to garbage/NaN and NOTHING is drawn (black window).
+            encoder.setVertexBuffer(self.uniform_buffer.as_ref(), 0, 1);
             encoder.setFragmentBuffer(self.uniform_buffer.as_ref(), 0, 0);
             encoder.drawPrimitives(
                 MTLPrimitiveType::PrimitiveTypeTriangle,
@@ -1023,6 +1043,9 @@ impl App {
         if !frame.text_verts.is_empty() {
             encoder.setRenderPipelineState(self.default_pso.as_ref());
             encoder.setVertexBuffer(self.vertex_buffer.as_ref(), 0, 0);
+            // FIX: same missing vertex-stage uniform binding as above — the
+            // text pass uses the default pipeline too.
+            encoder.setVertexBuffer(self.uniform_buffer.as_ref(), 0, 1);
             encoder.setFragmentBuffer(self.uniform_buffer.as_ref(), 0, 0);
             encoder.drawPrimitives(
                 MTLPrimitiveType::PrimitiveTypeTriangle,
