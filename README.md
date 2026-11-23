@@ -32,6 +32,8 @@ $ cargo check --all-targets     # works on any host
 ---
 
 # 고쳐야할것
+- 이 프로젝트 완료하고 다음으로 고쳐야할것
+  - [ ] https://github.com/YoungHaKim7/learn-metal-rust
 - examples 
   - [x] 001_hello_window.rs
     - 창은 나오지만 글씨가 나오지 않음
