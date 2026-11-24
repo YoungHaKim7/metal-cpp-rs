@@ -91,7 +91,7 @@ fn main() {
         acc: 0.0,
     };
     rd.reseed();
-    let app = gui::App::new("065 - Reaction Diffusion", W, H);
+    let app = gui::App::new_points("065 - Reaction Diffusion", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.06, 0.06, 0.09));
 

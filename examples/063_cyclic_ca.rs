@@ -60,7 +60,7 @@ fn main() {
         acc: 0.0,
     };
     ca.reseed();
-    let app = gui::App::new("063 - Cyclic CA", W, H);
+    let app = gui::App::new_points("063 - Cyclic CA", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.07, 0.07, 0.10));
 

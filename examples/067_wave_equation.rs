@@ -1,7 +1,8 @@
 //! 067 — Wave Equation: u_tt = c^2 * lap(u) on a 120x80 field with double
-//! buffering and mild damping. Click injects a Gaussian impulse; negative
-//! amplitude renders blue, zero dark, positive red. D toggles extra
-//! damping, SPACE pauses the ripples.
+//! buffering and mild damping. An initial drop in the centre starts the
+//! ripples; clicks inject more Gaussian impulses. Negative amplitude
+//! renders blue, zero dark, positive red. D toggles extra damping, SPACE
+//! pauses the ripples.
 
 #[path = "gui/mod.rs"]
 mod gui;
@@ -70,7 +71,11 @@ fn main() {
         paused: false,
         heavy: false,
     };
-    let app = gui::App::new("067 - Wave Equation", W, H);
+    let app = gui::App::new_points("067 - Wave Equation", W, H);
+    // Start with a drop in the middle of the pond: the field begins at
+    // zero, and without a first impulse the window would stay blank until
+    // the user clicks.
+    wave.impulse(COLS as i32 / 2, ROWS as i32 / 2);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.06, 0.06, 0.09));
 

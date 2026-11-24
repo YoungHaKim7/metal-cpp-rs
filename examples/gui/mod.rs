@@ -19,13 +19,16 @@
 //!
 //! # Coordinates
 //!
-//! Everything is drawn in *units*: two per point, on every display. The
-//! gallery was laid out on that grid (a 640×400-point window is a 1280×800
-//! canvas), so [`Frame::width`] / [`Frame::height`] are the same numbers on
-//! a Retina and on a non-Retina screen, and no caption outgrows its window
-//! because the backing scale differs. Sizes given in points are converted
-//! with [`Frame::scale`] (`units per point`); the mouse position comes in
-//! the same units, origin top-left.
+//! Everything is drawn in *drawing units*. By default a unit is half a
+//! point, on every display: the gallery was laid out on that grid (a
+//! 640×400-point window is a 1280×800 canvas), so [`Frame::width`] /
+//! [`Frame::height`] are the same numbers on a Retina and on a non-Retina
+//! screen, and no caption outgrows its window because the backing scale
+//! differs. An app whose layout is computed from the window size in points
+//! is created with [`App::new_points`] instead: it draws in points and its
+//! canvas is exactly `width × height`. In both cases [`Frame::scale`]
+//! converts a size given in points to drawing units, and the mouse position
+//! comes in drawing units, origin top-left.
 //!
 //! ESC closes every example; so do the red close button, `⌘W` and `⌘Q`.
 //!
@@ -347,8 +350,11 @@ impl Vertex {
 pub struct Input {
     keys_down: HashSet<u16>,
     keys_pressed: HashSet<u16>,
-    /// `(x, y)` in units, origin top-left.
+    /// `(x, y)` in drawing units, origin top-left. Until the first mouse
+    /// event it is the canvas centre, so nothing heads for the corner.
     mouse_pos: (f32, f32),
+    /// Has a mouse event been received yet?
+    mouse_known: bool,
     mouse_down: bool,
     mouse_pressed: bool,
     mouse_released: bool,
@@ -375,7 +381,7 @@ impl Input {
         &self.text
     }
 
-    /// Mouse position in units, origin top-left.
+    /// Mouse position in drawing units, origin top-left.
     pub fn mouse(&self) -> (f32, f32) {
         self.mouse_pos
     }
@@ -432,16 +438,20 @@ struct CustomDraw {
 }
 
 /// Per-frame drawing surface handed to the example's closure.
+///
+/// The coordinates handed to the drawing methods are *drawing units*; see
+/// the module docs for the default half-point grid and for
+/// [`App::new_points`].
 pub struct Frame {
-    /// Canvas width in units (two per point).
+    /// Canvas width in drawing units.
     pub width: f32,
-    /// Canvas height in units (two per point).
+    /// Canvas height in drawing units.
     pub height: f32,
     /// Seconds since the app started.
     pub time: f32,
     /// Seconds since the previous frame (clamped to 0.1).
     pub dt: f32,
-    /// Units per point — multiply a size given in points by it.
+    /// Multiply a size given in points by this to get drawing units.
     pub scale: f32,
     /// Input state for this frame.
     pub input: Input,
@@ -453,40 +463,48 @@ pub struct Frame {
     /// Bitmap text is collected separately and drawn LAST so fullscreen
     /// custom shaders can never bury captions.
     text_verts: Vec<Vertex>,
-    /// Device pixels per unit (half the backing scale): text is snapped to
-    /// whole device pixels with it.
+    /// Canvas units per drawing unit (1 on the default grid, 2 for an app
+    /// laid out in points).
+    zoom: f32,
+    /// Canvas size in canvas units — what the vertex shader divides the
+    /// vertex positions by (unlike `width` / `height`, this is not in
+    /// drawing units).
+    canvas: (f32, f32),
+    /// Device pixels per drawing unit: text is snapped to whole device
+    /// pixels with it.
     px_per_unit: f32,
 }
 
 impl Frame {
-    /// `(mouse_x, mouse_y)` in units, origin top-left.
+    /// `(mouse_x, mouse_y)` in drawing units, origin top-left.
     pub fn mouse(&self) -> (f32, f32) {
         self.input.mouse_pos
     }
 
-    /// Mouse X in units.
+    /// Mouse X in drawing units.
     pub fn mouse_x(&self) -> f32 {
         self.mouse().0
     }
 
-    /// Mouse Y in units.
+    /// Mouse Y in drawing units.
     pub fn mouse_y(&self) -> f32 {
         self.mouse().1
     }
 
-    /// Height of one glyph pixel, in units, that `s` should be drawn with:
-    /// `size` rounded to whole device pixels (bitmap glyphs stay crisp at
-    /// any backing scale; never below one device pixel), then stepped down
-    /// pixel by pixel while `s` would be wider than the canvas — a long
-    /// caption shrinks instead of being cut off at both ends, which matters
-    /// because rounding a half-pixel size up can make a line a third wider
-    /// than it was laid out to be.
+    /// Height of one glyph pixel, in drawing units, that `s` should be
+    /// drawn with: `size` rounded to whole device pixels (bitmap glyphs
+    /// stay crisp at any backing scale; never below one device pixel), then
+    /// stepped down pixel by pixel while `s` would be wider than the canvas
+    /// — a long caption shrinks instead of being cut off at both ends,
+    /// which matters because rounding a half-pixel size up can make a line
+    /// a third wider than it was laid out to be.
     fn fitted_size(&self, size: f32, s: &str) -> f32 {
-        let mut px = (size * self.px_per_unit).round().max(1.0);
-        while px > 1.0 && font::measure(px / self.px_per_unit, s) > self.width {
+        let k = self.px_per_unit;
+        let mut px = (size * k).round().max(1.0);
+        while px > 1.0 && font::measure(px / k, s) > self.width {
             px -= 1.0;
         }
-        px / self.px_per_unit
+        px / k
     }
 
     /// Snap a coordinate to the device pixel grid (glyph edges land exactly
@@ -495,9 +513,10 @@ impl Frame {
         (v * self.px_per_unit).round() / self.px_per_unit
     }
 
-    /// Append a filled `w`×`h` quad (two triangles, six vertices) to `verts`.
-    fn quad(verts: &mut Vec<Vertex>, x: f32, y: f32, w: f32, h: f32, color: Color) {
-        let (x1, y1) = (x + w, y + h);
+    /// Append a filled `w`×`h` quad (two triangles, six vertices) to
+    /// `verts`, converting drawing units to canvas units.
+    fn quad(verts: &mut Vec<Vertex>, z: f32, x: f32, y: f32, w: f32, h: f32, color: Color) {
+        let (x, y, x1, y1) = (x * z, y * z, (x + w) * z, (y + h) * z);
         verts.extend_from_slice(&[
             Vertex::new(x, y, color),
             Vertex::new(x1, y, color),
@@ -515,10 +534,11 @@ impl Frame {
 
     /// Add a filled rectangle.
     pub fn rect(&mut self, x: f32, y: f32, w: f32, h: f32, color: Color) {
-        Self::quad(&mut self.verts, x, y, w, h, color);
+        let z = self.zoom;
+        Self::quad(&mut self.verts, z, x, y, w, h, color);
     }
 
-    /// Add a rectangle outline `border` pixels thick.
+    /// Add a rectangle outline `border` drawing units thick.
     pub fn frame_rect(&mut self, x: f32, y: f32, w: f32, h: f32, border: f32, color: Color) {
         self.rect(x, y, w, border, color);
         self.rect(x, y + h - border, w, border, color);
@@ -528,12 +548,13 @@ impl Frame {
 
     /// Add a triangle from three points.
     pub fn tri(&mut self, a: (f32, f32), b: (f32, f32), c: (f32, f32), color: Color) {
-        self.verts.push(Vertex::new(a.0, a.1, color));
-        self.verts.push(Vertex::new(b.0, b.1, color));
-        self.verts.push(Vertex::new(c.0, c.1, color));
+        let z = self.zoom;
+        self.verts.push(Vertex::new(a.0 * z, a.1 * z, color));
+        self.verts.push(Vertex::new(b.0 * z, b.1 * z, color));
+        self.verts.push(Vertex::new(c.0 * z, c.1 * z, color));
     }
 
-    /// Add a thick line segment (`width` in pixels).
+    /// Add a thick line segment (`width` in drawing units).
     pub fn line(&mut self, x0: f32, y0: f32, x1: f32, y1: f32, width: f32, color: Color) {
         let dx = x1 - x0;
         let dy = y1 - y0;
@@ -597,7 +618,7 @@ impl Frame {
             return;
         }
         // One quad per arc segment, between the inner and the outer edge.
-        let mut edge = |angle: f32, r: f32| (cx + angle.cos() * r, cy + angle.sin() * r);
+        let edge = |angle: f32, r: f32| (cx + angle.cos() * r, cy + angle.sin() * r);
         for i in 0..segments {
             let a0 = (i as f32) / segments as f32 * std::f32::consts::TAU;
             let a1 = ((i + 1) as f32) / segments as f32 * std::f32::consts::TAU;
@@ -609,13 +630,13 @@ impl Frame {
     }
 
     /// Draw a line of 5x7 bitmap text, top-left anchored, `size` = height
-    /// of one glyph pixel in units (see `fitted_size`). Text is drawn after
-    /// every custom shader pass, so it always sits on top.
+    /// of one glyph pixel in drawing units (see `fitted_size`). Text is
+    /// drawn after every custom shader pass, so it always sits on top.
     pub fn text(&mut self, x: f32, y: f32, size: f32, s: &str, color: Color) {
-        let size = self.fitted_size(size, s);
+        let (size, z) = (self.fitted_size(size, s), self.zoom);
         let (mut cx, y) = (self.snap(x), self.snap(y));
         for ch in s.chars() {
-            let rows = font::glyph_rows(if ch.is_ascii() { ch as u8 } else { b' ' });
+            let rows = font::glyph_rows(ch);
             for (row, &bits) in rows.iter().enumerate() {
                 // One quad per horizontal run of lit pixels.
                 let lit = |col: usize| bits & (1u8 << (4 - col)) != 0;
@@ -631,6 +652,7 @@ impl Frame {
                     }
                     Self::quad(
                         &mut self.text_verts,
+                        z,
                         cx + start as f32 * size,
                         y + row as f32 * size,
                         (col - start) as f32 * size,
@@ -655,7 +677,9 @@ impl Frame {
     }
 
     /// Draw triangles with a custom pipeline (see the module docs for the
-    /// vertex/uniform conventions).
+    /// vertex/uniform conventions). Positions are in drawing units like
+    /// everything else; the uniform chunk reports the canvas in *canvas*
+    /// units, so `pos / u[0].xy` still lands in normalized coordinates.
     pub fn draw_custom(
         &mut self,
         pso: &MTLRenderPipelineState,
@@ -666,7 +690,10 @@ impl Frame {
             return;
         }
         let first = self.verts.len() as u32;
-        self.verts.extend_from_slice(verts);
+        let z = self.zoom;
+        self.verts.extend(verts.iter().map(|v| {
+            Vertex::new(v.x * z, v.y * z, Color::rgba(v.r, v.g, v.b, v.a))
+        }));
         let uniform_offset_bytes = self.customs.len() as usize * UNIFORM_CHUNK_FLOATS * 4;
         if (uniform_offset_bytes as u64 + UNIFORM_CHUNK_FLOATS as u64 * 4) > UNIFORM_BUFFER_BYTES {
             self.verts.truncate(first as usize);
@@ -760,6 +787,9 @@ pub struct App {
     /// Backing scale (device pixels per point) of the display the window
     /// is on.
     backing_scale: f32,
+    /// Canvas units per drawing unit (1, or 2 for an app laid out in
+    /// points).
+    zoom: f32,
     running: bool,
 }
 
@@ -772,6 +802,17 @@ impl App {
     /// Panics when no Metal device is available or AppKit fails to
     /// initialize (i.e. not running on macOS).
     pub fn new(title: &str, width: f64, height: f64) -> App {
+        App::build(title, width, height, 1.0)
+    }
+
+    /// Like [`App::new`], for an app whose layout is written in points: the
+    /// drawing canvas is exactly `width × height` drawing units, so a
+    /// layout computed from the window size needs no conversion.
+    pub fn new_points(title: &str, width: f64, height: f64) -> App {
+        App::build(title, width, height, UNITS_PER_POINT)
+    }
+
+    fn build(title: &str, width: f64, height: f64, zoom: f32) -> App {
         // Load AppKit and QuartzCore before any Objective-C class lookup.
         appkit_force_link();
         metal_cpp_rs::quartz_core::quartz_core_force_link();
@@ -866,6 +907,7 @@ impl App {
                 width_points: bounds.size.width as f32,
                 height_points: bounds.size.height as f32,
                 backing_scale: scale as f32,
+                zoom,
                 running: true,
             }
         }
@@ -1086,11 +1128,13 @@ impl App {
 
     unsafe fn update_mouse(&mut self, ev: Ref<NSEvent>) {
         let p = ev.locationInWindow();
-        // `locationInWindow` is bottom-left anchored and in points.
+        // `locationInWindow` is bottom-left anchored and in points; the
+        // position is kept in canvas units.
         self.input.mouse_pos = (
             p.x as f32 * UNITS_PER_POINT,
             (self.height_points as f64 - p.y) as f32 * UNITS_PER_POINT,
         );
+        self.input.mouse_known = true;
     }
 
     unsafe fn sync_size(&mut self) {
@@ -1118,19 +1162,34 @@ impl App {
         let now = Instant::now();
         let dt = now.duration_since(self.last_frame).as_secs_f32().min(0.1);
         self.last_frame = now;
+        // Canvas size in units, before conversion to drawing units.
+        let (uw, uh) = (
+            self.width_points * UNITS_PER_POINT,
+            self.height_points * UNITS_PER_POINT,
+        );
+        let (zoom, backing) = (self.zoom, self.backing_scale);
+        let mut input = self.input.clone();
+        input.mouse_pos = if input.mouse_known {
+            (input.mouse_pos.0 / zoom, input.mouse_pos.1 / zoom)
+        } else {
+            // No mouse event yet: report the centre of the canvas.
+            (uw * 0.5 / zoom, uh * 0.5 / zoom)
+        };
         Frame {
-            width: self.width_points * UNITS_PER_POINT,
-            height: self.height_points * UNITS_PER_POINT,
+            width: uw / zoom,
+            height: uh / zoom,
             time: self.started.elapsed().as_secs_f32(),
             dt,
-            scale: UNITS_PER_POINT,
-            input: self.input.clone(),
+            scale: UNITS_PER_POINT / zoom,
+            input,
             clear: Color::rgb(0.05, 0.05, 0.08),
             verts: Vec::with_capacity(4096),
             customs: Vec::new(),
             pending_uniforms: Vec::new(),
             text_verts: Vec::with_capacity(4096),
-            px_per_unit: self.backing_scale / UNITS_PER_POINT,
+            zoom,
+            canvas: (uw, uh),
+            px_per_unit: zoom * backing / UNITS_PER_POINT,
         }
     }
 
@@ -1192,8 +1251,10 @@ impl App {
         // Upload uniform chunks into the shared scratch buffer. Chunk `n`
         // serves the `n`-th custom draw: `u[0]` = frame globals, `u[1..]` =
         // the example's floats (at most 60, the rest of the 64-float chunk).
+        // The globals carry the canvas in *canvas* units: that is the space
+        // the vertex positions are in.
         let unif_dst = self.uniform_buffer.contents() as *mut f32;
-        let globals = [frame.width, frame.height, frame.time, frame.scale];
+        let globals = [frame.canvas.0, frame.canvas.1, frame.time, frame.scale];
         for (chunk, uniforms) in frame.pending_uniforms.iter().enumerate() {
             let base = chunk * UNIFORM_CHUNK_FLOATS;
             for (i, v) in globals.iter().enumerate() {

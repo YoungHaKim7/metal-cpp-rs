@@ -84,7 +84,7 @@ fn main() {
         acc: 0.0,
     };
     brain.reseed();
-    let app = gui::App::new("062 - Brian's Brain", W, H);
+    let app = gui::App::new_points("062 - Brian's Brain", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.07, 0.07, 0.10));
 

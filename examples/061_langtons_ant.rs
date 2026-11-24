@@ -70,7 +70,7 @@ impl Ant {
 
 fn main() {
     let mut ant = Ant::new();
-    let app = gui::App::new("061 - Langton's Ant", W, H);
+    let app = gui::App::new_points("061 - Langton's Ant", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.06, 0.06, 0.09));
 

@@ -77,7 +77,7 @@ fn main() {
         rng: gui::Rng::from_entropy(),
     };
     drunk.reset();
-    let app = gui::App::new("068 - Drunkard's Walk", W, H);
+    let app = gui::App::new_points("068 - Drunkard's Walk", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.06, 0.05, 0.05));
 

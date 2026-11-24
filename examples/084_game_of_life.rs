@@ -180,7 +180,7 @@ const R_PENTOMINO: [(i32, i32); 5] = [(1, 0), (2, 0), (0, 1), (1, 1), (1, 2)];
 
 fn main() {
     let mut life = Life::new();
-    let app = gui::App::new("084 - Game of Life", W, H);
+    let app = gui::App::new_points("084 - Game of Life", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.08, 0.08, 0.10));
 

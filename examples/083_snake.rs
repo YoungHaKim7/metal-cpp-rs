@@ -135,7 +135,7 @@ impl PopFront for Vec<(i32, i32)> {
 
 fn main() {
     let mut game = Snake::new();
-    let app = gui::App::new("083 - Snake", W, H);
+    let app = gui::App::new_points("083 - Snake", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.07, 0.09, 0.08));
         game.update(f);

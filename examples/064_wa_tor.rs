@@ -180,7 +180,7 @@ fn main() {
         rng: gui::Rng::from_entropy(),
     };
     sea.reseed();
-    let app = gui::App::new("064 - Wa-Tor", W, H);
+    let app = gui::App::new_points("064 - Wa-Tor", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.06, 0.07, 0.10));
 

@@ -31,14 +31,16 @@ impl Todo {
 
 fn main() {
     let mut todo = Todo::new();
-    let app = gui::App::new("081 - Todo App", W, H);
+    let app = gui::App::new_points("081 - Todo App", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.10, 0.10, 0.14));
 
         let margin = 20.0;
         let row_h = 44.0;
         let input_h = 56.0;
-        let top = 86.0;
+        // First task row. The header (y 24..60) and then the input line
+        // (56 high, 8 above this) sit above it without overlapping either.
+        let top = 132.0;
 
         // Header.
         f.text(margin, 24.0, 5.0, "TODO", gui::Color::WHITE);

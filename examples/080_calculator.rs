@@ -159,7 +159,7 @@ const BUTTONS: [(&str, f32, f32, u32); 19] = [
 
 fn main() {
     let mut calc = Calc::new();
-    let app = gui::App::new("080 - Calculator", W, H);
+    let app = gui::App::new_points("080 - Calculator", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.09, 0.09, 0.12));
 

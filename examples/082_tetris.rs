@@ -260,7 +260,7 @@ fn draw_piece(f: &mut gui::Frame, kind: usize, px: i8, py: i8, ox: f32, oy: f32)
 
 fn main() {
     let mut game = Tetris::new();
-    let app = gui::App::new("082 - Tetris", W, H);
+    let app = gui::App::new_points("082 - Tetris", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.07, 0.08, 0.11));
         game.update(f);

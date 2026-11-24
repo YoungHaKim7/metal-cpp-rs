@@ -93,7 +93,7 @@ fn main() {
         rng: gui::Rng::from_entropy(),
     };
     forest.reseed();
-    let app = gui::App::new("066 - Forest Fire", W, H);
+    let app = gui::App::new_points("066 - Forest Fire", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.08, 0.07, 0.06));
 

@@ -1,6 +1,7 @@
 //! 5x7 pixel font for the GUI examples — one byte per row, bit 4 is the
-//! leftmost pixel. Lowercase letters map to uppercase glyphs; anything
-//! outside printable ASCII renders as a space.
+//! leftmost pixel. Lowercase letters map to uppercase glyphs; outside
+//! printable ASCII only the symbols in [`SYMBOLS`] exist, and anything
+//! else renders as a space.
 
 /// Glyph width in pixels.
 pub const GLYPH_W: u32 = 5;
@@ -111,13 +112,24 @@ const FONT: [[u8; 7]; 95] = [
     [0x00, 0x00, 0x08, 0x15, 0x02, 0x00, 0x00], // '~'
 ];
 
+/// The few non-ASCII characters the gallery uses (operator keys and dashes
+/// in captions). Without them they would draw as blanks.
+const SYMBOLS: [(char, [u8; 7]); 4] = [
+    ('×', [0x00, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x00]),
+    ('÷', [0x00, 0x04, 0x00, 0x1F, 0x00, 0x04, 0x00]),
+    ('−', [0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00]),
+    ('—', [0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00]),
+];
+
 /// The 7 row bytes for a character (bit 4 = leftmost pixel).
-pub fn glyph_rows(ch: u8) -> [u8; 7] {
-    let idx = match ch {
-        0x20..=0x7E => (ch - 0x20) as usize,
-        _ => 0,
-    };
-    FONT[idx]
+pub fn glyph_rows(ch: char) -> [u8; 7] {
+    if let Some(code) = ch.as_ascii() {
+        return FONT[(code as u8 - 0x20) as usize];
+    }
+    SYMBOLS
+        .iter()
+        .find(|(symbol, _)| *symbol == ch)
+        .map_or(FONT[0], |(_, rows)| *rows)
 }
 
 /// Total rendered width of `text` at the given glyph size (pixels).
