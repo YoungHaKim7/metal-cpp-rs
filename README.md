@@ -6,6 +6,9 @@
   </a>
 </p>
 
+> [!WARNING]  
+> This is code written with AI. Double-check the code before using the project
+
 # metal-cpp-rs
 
 **ABI-faithful Rust conversion of Apple's
