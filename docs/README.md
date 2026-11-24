@@ -18,7 +18,7 @@
 # Understanding the metal 4 core API
 - https://developer.apple.com/documentation/metal/understanding-the-metal-4-core-api
 
-<img width="1470" height="392" alt="understanding-the-metal-4-core-api-1~dark" src="https://github.com/user-attachments/assets/c2bf6964-da6a-4113-a30b-b44ff3360a99" />
+<img width="939" height="266" alt="Screenshot 2026-11-25 at 8 12 56 AM" src="https://github.com/user-attachments/assets/0aeefd63-c755-4a86-ab9d-f94cabc9e1de" />
 
 # Metal LSP
 - https://github.com/computer-graphics-tools/metal-analyzer
