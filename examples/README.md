@@ -1,14 +1,3 @@
-| Class | Examples |
-| --- | --- |
-| Content shrunk into a corner of a much larger window | 061–068, 080–084 |
-| Fractal off-centre | 010, 096 |
-| Subject cut off (camera) | 074, 075, 076 |
-| Nearly/entirely blank or wrong | 011, 015, 031 (SCALE = NAN), 036, 040, 055, 067, 077, 079 |
-| Missing detail | 006, 020, 027 |
-| Overlapping text | 092, 093, 017? |
-| Mouse starts at corner (runtime) | 051 |
-| Need synthetic input to verify | 041, 052, 053, 055, 056–059, games |
-
 # 여기에 추가로 examples(최종 예시) 
 
 > Learn Metal Cpp 예시랑 비슷학 만든거

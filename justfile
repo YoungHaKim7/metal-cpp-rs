@@ -1,4 +1,3 @@
-
 # Check all 102 examples
 check-all:
     cargo check --examples
