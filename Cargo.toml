@@ -5,7 +5,8 @@ edition = "2024"
 rust-version = "1.100.0"
 description = "ABI-faithful Rust conversion of Apple's metal-cpp: raw Objective-C runtime FFI for Metal, Foundation and QuartzCore (macOS 27 / iOS 27 SDK era)"
 license = "Apache-2.0"
-repository = "https://github.com/apple/metal-cpp"
+repository = "https://github.com/YoungHaKim7/metal-cpp-rs"
+documentation = "https://docs.rs/metal-cpp-rs"
 keywords = ["metal", "apple", "objc", "ffi", "gpu"]
 categories = ["api-bindings", "os::macos-apis"]
 
