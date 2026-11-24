@@ -94,6 +94,11 @@ unsafe extern "C" {
     fn objc_msgSend_stret();
     #[cfg(target_arch = "x86_64")]
     fn objc_msgSend_fpret();
+
+    /// `object_getClass` — the dynamic class of an object (`Nil` for `nil`).
+    fn object_getClass(object: Raw) -> Class;
+    /// `class_getName` — the runtime name of a class (never `NULL`).
+    fn class_getName(cls: Class) -> *const c_char;
 }
 
 // ---------------------------------------------------------------------------
@@ -101,131 +106,49 @@ unsafe extern "C" {
 // template specializations).
 // ---------------------------------------------------------------------------
 
-/// `objc_msgSend` with no arguments.
-pub unsafe fn send<R>(receiver: Raw, sel: Sel) -> R {
-    let f: unsafe extern "C" fn(Raw, Sel) -> R =
-        mem::transmute(objc_msgSend as unsafe extern "C" fn());
-    f(receiver, sel)
+/// Generates `send` / `send1` .. `send12`: each casts the untyped
+/// `objc_msgSend` to the concrete `extern "C"` signature implied by its
+/// generic parameters, so the platform ABI classifies every argument and the
+/// return value exactly as a matching Objective-C method signature would.
+macro_rules! impl_send {
+    ($(($doc:literal, $name:ident ($($arg:ident),*))),* $(,)?) => {$(
+        #[doc = $doc]
+        pub unsafe fn $name<$($arg,)* R>(receiver: Raw, sel: Sel $(, $arg: $arg)*) -> R {
+            let f: unsafe extern "C" fn(Raw, Sel $(, $arg)*) -> R =
+                mem::transmute(objc_msgSend as unsafe extern "C" fn());
+            f(receiver, sel $(, $arg)*)
+        }
+    )*};
 }
 
-/// `objc_msgSend` with one argument.
-pub unsafe fn send1<A1, R>(receiver: Raw, sel: Sel, a1: A1) -> R {
-    let f: unsafe extern "C" fn(Raw, Sel, A1) -> R =
-        mem::transmute(objc_msgSend as unsafe extern "C" fn());
-    f(receiver, sel, a1)
+impl_send! {
+    ("`objc_msgSend` with no arguments.", send ()),
+    ("`objc_msgSend` with one argument.", send1 (A1)),
+    ("`objc_msgSend` with two arguments.", send2 (A1, A2)),
+    ("`objc_msgSend` with three arguments.", send3 (A1, A2, A3)),
+    ("`objc_msgSend` with four arguments.", send4 (A1, A2, A3, A4)),
+    ("`objc_msgSend` with five arguments.", send5 (A1, A2, A3, A4, A5)),
+    ("`objc_msgSend` with six arguments.", send6 (A1, A2, A3, A4, A5, A6)),
+    ("`objc_msgSend` with seven arguments.", send7 (A1, A2, A3, A4, A5, A6, A7)),
+    ("`objc_msgSend` with eight arguments.", send8 (A1, A2, A3, A4, A5, A6, A7, A8)),
+    ("`objc_msgSend` with nine arguments.", send9 (A1, A2, A3, A4, A5, A6, A7, A8, A9)),
+    ("`objc_msgSend` with ten arguments.", send10 (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)),
+    ("`objc_msgSend` with eleven arguments.", send11 (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)),
+    ("`objc_msgSend` with twelve arguments.", send12 (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)),
 }
 
-/// `objc_msgSend` with two arguments.
-pub unsafe fn send2<A1, A2, R>(receiver: Raw, sel: Sel, a1: A1, a2: A2) -> R {
-    let f: unsafe extern "C" fn(Raw, Sel, A1, A2) -> R =
-        mem::transmute(objc_msgSend as unsafe extern "C" fn());
-    f(receiver, sel, a1, a2)
-}
-
-/// `objc_msgSend` with three arguments.
-pub unsafe fn send3<A1, A2, A3, R>(receiver: Raw, sel: Sel, a1: A1, a2: A2, a3: A3) -> R {
-    let f: unsafe extern "C" fn(Raw, Sel, A1, A2, A3) -> R =
-        mem::transmute(objc_msgSend as unsafe extern "C" fn());
-    f(receiver, sel, a1, a2, a3)
-}
-
-/// `objc_msgSend` with four arguments.
-pub unsafe fn send4<A1, A2, A3, A4, R>(
-    receiver: Raw,
-    sel: Sel,
-    a1: A1,
-    a2: A2,
-    a3: A3,
-    a4: A4,
-) -> R {
-    let f: unsafe extern "C" fn(Raw, Sel, A1, A2, A3, A4) -> R =
-        mem::transmute(objc_msgSend as unsafe extern "C" fn());
-    f(receiver, sel, a1, a2, a3, a4)
-}
-
-/// `objc_msgSend` with five arguments.
-pub unsafe fn send5<A1, A2, A3, A4, A5, R>(
-    receiver: Raw,
-    sel: Sel,
-    a1: A1,
-    a2: A2,
-    a3: A3,
-    a4: A4,
-    a5: A5,
-) -> R {
-    let f: unsafe extern "C" fn(Raw, Sel, A1, A2, A3, A4, A5) -> R =
-        mem::transmute(objc_msgSend as unsafe extern "C" fn());
-    f(receiver, sel, a1, a2, a3, a4, a5)
-}
-
-/// `objc_msgSend` with six arguments.
-pub unsafe fn send6<A1, A2, A3, A4, A5, A6, R>(
-    receiver: Raw,
-    sel: Sel,
-    a1: A1,
-    a2: A2,
-    a3: A3,
-    a4: A4,
-    a5: A5,
-    a6: A6,
-) -> R {
-    let f: unsafe extern "C" fn(Raw, Sel, A1, A2, A3, A4, A5, A6) -> R =
-        mem::transmute(objc_msgSend as unsafe extern "C" fn());
-    f(receiver, sel, a1, a2, a3, a4, a5, a6)
-}
-
-/// `objc_msgSend` with seven arguments.
-pub unsafe fn send7<A1, A2, A3, A4, A5, A6, A7, R>(
-    receiver: Raw,
-    sel: Sel,
-    a1: A1,
-    a2: A2,
-    a3: A3,
-    a4: A4,
-    a5: A5,
-    a6: A6,
-    a7: A7,
-) -> R {
-    let f: unsafe extern "C" fn(Raw, Sel, A1, A2, A3, A4, A5, A6, A7) -> R =
-        mem::transmute(objc_msgSend as unsafe extern "C" fn());
-    f(receiver, sel, a1, a2, a3, a4, a5, a6, a7)
-}
-
-/// `objc_msgSend` with eight arguments.
-pub unsafe fn send8<A1, A2, A3, A4, A5, A6, A7, A8, R>(
-    receiver: Raw,
-    sel: Sel,
-    a1: A1,
-    a2: A2,
-    a3: A3,
-    a4: A4,
-    a5: A5,
-    a6: A6,
-    a7: A7,
-    a8: A8,
-) -> R {
-    let f: unsafe extern "C" fn(Raw, Sel, A1, A2, A3, A4, A5, A6, A7, A8) -> R =
-        mem::transmute(objc_msgSend as unsafe extern "C" fn());
-    f(receiver, sel, a1, a2, a3, a4, a5, a6, a7, a8)
-}
-
-/// `objc_msgSend` with nine arguments.
-pub unsafe fn send9<A1, A2, A3, A4, A5, A6, A7, A8, A9, R>(
-    receiver: Raw,
-    sel: Sel,
-    a1: A1,
-    a2: A2,
-    a3: A3,
-    a4: A4,
-    a5: A5,
-    a6: A6,
-    a7: A7,
-    a8: A8,
-    a9: A9,
-) -> R {
-    let f: unsafe extern "C" fn(Raw, Sel, A1, A2, A3, A4, A5, A6, A7, A8, A9) -> R =
-        mem::transmute(objc_msgSend as unsafe extern "C" fn());
-    f(receiver, sel, a1, a2, a3, a4, a5, a6, a7, a8, a9)
+/// The runtime class name of an object (`object_getClass` + `class_getName`),
+/// or `"nil"` for a null pointer.
+///
+/// # Safety
+/// `object` must be a valid Objective-C object pointer (or null).
+pub unsafe fn class_name_of(object: Raw) -> &'static str {
+    if object.is_null() {
+        return "nil";
+    }
+    CStr::from_ptr(class_getName(object_getClass(object)))
+        .to_str()
+        .unwrap_or("<non-utf8 class name>")
 }
 
 /// Struct-returning `objc_msgSend`. On `x86_64`, Apple's ABI routes returns
@@ -369,6 +292,7 @@ macro_rules! objc_class {
     ($(#[$m:meta])* $vis:vis struct $name:ident : $cls:literal;) => {
         $(#[$m])*
         #[repr(transparent)]
+        #[derive(Clone, Copy)]
         $vis struct $name($crate::objc_abi::Raw);
 
         impl $crate::objc_abi::Obj for $name {
@@ -420,7 +344,11 @@ pub(crate) use objc_class;
 
 /// Every wrapper type implements this; it is the Rust stand-in for the common
 /// `NS::Object` base of metal-cpp.
-pub trait Obj: Sized {
+///
+/// A wrapper is nothing but an `id`, so the types are `Copy`: handing one to
+/// a call passes the pointer, exactly like a `T*` in metal-cpp, and never
+/// touches the reference count (only [`Strong`] owns a reference).
+pub trait Obj: Sized + Copy {
     /// Wrap a raw `id` without any retain/release.
     fn from_raw(ptr: Raw) -> Self;
     /// The underlying `id`.
@@ -599,12 +527,15 @@ impl<T: Obj> Ref<T> {
     }
 }
 
+// A `Ref` is a borrowed view (`&T` in metal-cpp): copying one copies the
+// pointer, never the object, and never affects the reference count.
 impl<T: Obj> Clone for Ref<T> {
     fn clone(&self) -> Self {
-        Ref(T::from_raw(self.0.as_raw()))
+        *self
     }
 }
 
+impl<T: Obj> Copy for Ref<T> {}
 impl<T: Obj> Deref for Ref<T> {
     type Target = T;
     fn deref(&self) -> &T {

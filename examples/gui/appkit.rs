@@ -14,7 +14,7 @@ use std::sync::LazyLock;
 use metal_cpp_rs::foundation::NSString;
 use metal_cpp_rs::objc_abi::{
     CFTimeInterval, CGFloat, Class, NSInteger, NSUInteger, Obj, ObjBOOL, Raw, Ref, Sel, Strong,
-    bool_arg, send, send_bool, send_stret, send1, send4,
+    bool_arg, send, send10, send3, send9, send_bool, send_stret, send1, send2, send4,
 };
 use metal_cpp_rs::quartz_core::CGSize;
 
@@ -112,6 +112,7 @@ macro_rules! ns_class {
     ($(#[$m:meta])* $vis:vis struct $name:ident : $cls:literal;) => {
         $(#[$m])*
         #[repr(transparent)]
+        #[derive(Clone, Copy)]
         $vis struct $name(Raw);
 
         impl Obj for $name {
@@ -229,6 +230,64 @@ impl NSApplication {
         send1::<Raw, ()>(self.as_raw(), ns_sel!("sendEvent:"), event.as_raw());
     }
 
+    /// `-postEvent:atStart:` — put an event on the application queue, where
+    /// the next `nextEventMatchingMask:...` returns it.
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn postEvent_atStart(&self, event: Ref<NSEvent>, at_start: bool) {
+        send2::<Raw, ObjBOOL, ()>(
+            self.as_raw(),
+            ns_sel!("postEvent:atStart:"),
+            event.as_raw(),
+            bool_arg(at_start),
+        );
+    }
+
+    /// `-isActive` — is this application the frontmost one?
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn isActive(&self) -> bool {
+        send_bool(self.as_raw(), ns_sel!("isActive"))
+    }
+
+    /// `-finishLaunching` — completes `NSApplication` start-up (connects to
+    /// the window server, posts `ApplicationDidFinishLaunching`). `run` is
+    /// never called because the examples pump events themselves, so this
+    /// has to be sent explicitly, before any activation request.
+    ///
+    /// # Safety
+    /// Must be called on the main thread. Calls into the Objective-C runtime.
+    pub unsafe fn finishLaunching(&self) {
+        send::<()>(self.as_raw(), ns_sel!("finishLaunching"));
+    }
+
+    /// `-activate` (macOS 14+) or the older `-activateIgnoringOtherApps:YES`.
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn activate(&self) {
+        let sel = ns_sel!("activate");
+        if self.respondsToSelector(sel) {
+            send::<()>(self.as_raw(), sel);
+        } else {
+            send1::<ObjBOOL, ()>(
+                self.as_raw(),
+                ns_sel!("activateIgnoringOtherApps:"),
+                bool_arg(true),
+            );
+        }
+    }
+
+    /// `-setMainMenu:`
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn setMainMenu(&self, menu: Ref<NSMenu>) {
+        send1::<Raw, ()>(self.as_raw(), ns_sel!("setMainMenu:"), menu.as_raw());
+    }
+
     /// `-terminate:`
     ///
     /// # Safety
@@ -245,7 +304,9 @@ ns_class!(
 
 impl NSWindow {
     /// `-initWithContentRect:styleMask:backing:defer:` — consumes the
-    /// alloc's +1 and returns the initialized window.
+    /// alloc's +1 and returns the initialized window. `init…` hands the
+    /// same reference back, so the returned `Strong` owns it and the
+    /// argument must not be released a second time.
     ///
     /// # Safety
     /// Calls into the Objective-C runtime.
@@ -256,15 +317,16 @@ impl NSWindow {
         backing: NSUInteger,
         defer: bool,
     ) -> Strong<NSWindow> {
-        let raw = send4::<NSRect, NSUInteger, NSUInteger, ObjBOOL, Raw>(
-            window.ptr(),
+        let raw = window.into_raw();
+        let initialized = send4::<NSRect, NSUInteger, NSUInteger, ObjBOOL, Raw>(
+            raw,
             ns_sel!("initWithContentRect:styleMask:backing:defer:"),
             content_rect,
             style,
             backing,
             bool_arg(defer),
         );
-        Strong::from_transfer(raw)
+        Strong::from_transfer(initialized)
     }
 
     /// `-setTitle:`
@@ -334,6 +396,221 @@ impl NSWindow {
     pub unsafe fn backingScaleFactor(&self) -> CGFloat {
         send::<CGFloat>(self.as_raw(), ns_sel!("backingScaleFactor"))
     }
+
+    /// `-windowNumber` — the window-server identifier.
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn windowNumber(&self) -> NSInteger {
+        send::<NSInteger>(self.as_raw(), ns_sel!("windowNumber"))
+    }
+
+    /// `-isKeyWindow` — does this window receive keyboard events?
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn isKeyWindow(&self) -> bool {
+        send_bool(self.as_raw(), ns_sel!("isKeyWindow"))
+    }
+
+    /// `-makeKeyWindow`
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn makeKeyWindow(&self) {
+        send::<()>(self.as_raw(), ns_sel!("makeKeyWindow"));
+    }
+
+    /// `-convertPointToBacking:` — points → pixels.
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn convertPointToBacking(&self, point: NSPoint) -> NSPoint {
+        send1::<NSPoint, NSPoint>(self.as_raw(), ns_sel!("convertPointToBacking:"), point)
+    }
+
+    /// `-contentRect` (for frame → content mapping).
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn contentRect(&self) -> NSRect {
+        send_stret::<NSRect>(self.as_raw(), ns_sel!("contentRect"))
+    }
+
+    /// `-setFrame:display:` — move/resize the window.
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn setFrame_display(&self, frame: NSRect, display: bool) {
+        send2::<NSRect, ObjBOOL, ()>(
+            self.as_raw(),
+            ns_sel!("setFrame:display:"),
+            frame,
+            bool_arg(display),
+        );
+    }
+
+    /// `-performClose:` — the close button's action.
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn performClose(&self, sender: Raw) {
+        send1::<Raw, ()>(self.as_raw(), ns_sel!("performClose:"), sender);
+    }
+
+    /// `-setReleasedWhenClosed:`
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn setReleasedWhenClosed(&self, flag: bool) {
+        send1::<ObjBOOL, ()>(
+            self.as_raw(),
+            ns_sel!("setReleasedWhenClosed:"),
+            bool_arg(flag),
+        );
+    }
+
+    /// `-isReleasedWhenClosed`
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn isReleasedWhenClosed(&self) -> bool {
+        send_bool(self.as_raw(), ns_sel!("isReleasedWhenClosed"))
+    }
+
+    /// `-setFrameTopLeftPoint:` — position the window frame (points, screen
+    /// coordinates, origin bottom-left).
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn setFrameTopLeftPoint(&self, point: NSPoint) {
+        send1::<NSPoint, ()>(self.as_raw(), ns_sel!("setFrameTopLeftPoint:"), point);
+    }
+}
+
+/// `+[NSEvent modifierFlags]` — the modifier keys held right now, whether
+/// or not a flags-changed event has been delivered to this window.
+///
+/// # Safety
+/// Calls into the Objective-C runtime.
+pub unsafe fn current_modifier_flags() -> NSUInteger {
+    send::<NSUInteger>(NSEvent::class_ptr().ptr(), ns_sel!("modifierFlags"))
+}
+
+ns_class!(
+    /// `NSMenu` — used for the minimal menu bar every example installs.
+    pub struct NSMenu : "NSMenu";
+);
+
+ns_class!(
+    /// `NSMenuItem` — one entry of an `NSMenu`.
+    pub struct NSMenuItem : "NSMenuItem";
+);
+
+impl NSMenu {
+    /// `-initWithTitle:` — consumes the alloc's +1 (the returned `Strong`
+    /// owns it; `init…` hands the same reference back, so the argument must
+    /// not be released a second time).
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn initWithTitle(menu: Strong<NSMenu>, title: Ref<NSString>) -> Strong<NSMenu> {
+        let raw = menu.into_raw();
+        Strong::from_transfer(send1::<Raw, Raw>(
+            raw,
+            ns_sel!("initWithTitle:"),
+            title.as_raw(),
+        ))
+    }
+
+    /// `-addItemWithTitle:action:keyEquivalent:` (+0 autoreleased →
+    /// retained). A null `action` makes a plain title (menu-bar root); a
+    /// `key` of `""` means no shortcut.
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn addItemWithTitle_action_keyEquivalent(
+        &self,
+        title: Ref<NSString>,
+        action: Sel,
+        key: &str,
+    ) -> Strong<NSMenuItem> {
+        let key = NSString::from_str(key);
+        Strong::from_retain(send3::<Raw, Sel, Raw, Raw>(
+            self.as_raw(),
+            ns_sel!("addItemWithTitle:action:keyEquivalent:"),
+            title.as_raw(),
+            action,
+            key.as_ref().as_raw(),
+        ))
+    }
+
+    /// `-setAutoenablesItems:` — `NO` keeps every item enabled without
+    /// asking the responder chain to validate it.
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn setAutoenablesItems(&self, flag: bool) {
+        send1::<ObjBOOL, ()>(self.as_raw(), ns_sel!("setAutoenablesItems:"), bool_arg(flag));
+    }
+}
+
+impl NSMenuItem {
+    /// `-setSubmenu:` — turns the item into a menu-bar title.
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn setSubmenu(&self, menu: Ref<NSMenu>) {
+        send1::<Raw, ()>(self.as_raw(), ns_sel!("setSubmenu:"), menu.as_raw());
+    }
+
+    /// `-setKeyEquivalentModifierMask:`
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn setKeyEquivalentModifierMask(&self, mask: NSUInteger) {
+        send1::<NSUInteger, ()>(self.as_raw(), ns_sel!("setKeyEquivalentModifierMask:"), mask);
+    }
+}
+
+/// Install a minimal menu bar: an application menu with `Quit <title> ⌘Q`
+/// and a Window menu with `Close ⌘W`. Without it an unbundled executable
+/// shows an empty menu bar while it is frontmost and `⌘Q` does nothing.
+///
+/// The shortcut is dispatched by AppKit, so key events that carry the
+/// Command modifier must reach `-sendEvent:` (see `App::handle_event`).
+///
+/// # Safety
+/// Calls into the Objective-C runtime; main thread only.
+pub unsafe fn install_main_menu(app: &NSApplication, title: &str) {
+    let bar = NSMenu::initWithTitle(NSMenu::alloc(), NSString::from_str("").as_ref());
+    bar.setAutoenablesItems(false);
+
+    let app_menu = NSMenu::initWithTitle(NSMenu::alloc(), NSString::from_str("").as_ref());
+    let quit = app_menu.addItemWithTitle_action_keyEquivalent(
+        NSString::from_str(&format!("Quit {title}")).as_ref(),
+        ns_sel!("terminate:"),
+        "q",
+    );
+    quit.setKeyEquivalentModifierMask(MODIFIER_FLAG_COMMAND);
+
+    let window_menu = NSMenu::initWithTitle(NSMenu::alloc(), NSString::from_str("Window").as_ref());
+    let close = window_menu.addItemWithTitle_action_keyEquivalent(
+        NSString::from_str("Close Window").as_ref(),
+        ns_sel!("performClose:"),
+        "w",
+    );
+    close.setKeyEquivalentModifierMask(MODIFIER_FLAG_COMMAND);
+
+    for (name, submenu) in [(title, app_menu), ("Window", window_menu)] {
+        let root = bar.addItemWithTitle_action_keyEquivalent(
+            NSString::from_str(name).as_ref(),
+            Sel(std::ptr::null()),
+            "",
+        );
+        root.setSubmenu(submenu.as_ref());
+    }
+    app.setMainMenu(bar.as_ref());
 }
 
 ns_class!(
@@ -420,6 +697,92 @@ impl NSEvent {
     pub unsafe fn modifierFlags(&self) -> NSUInteger {
         send::<NSUInteger>(self.as_raw(), ns_sel!("modifierFlags"))
     }
+
+    /// `+[NSEvent keyEventWithType:location:modifierFlags:timestamp:windowNumber:context:characters:charactersIgnoringModifiers:isARepeat:keyCode:]`
+    /// (+0 autoreleased → retained). `key_code` is a HID usage code.
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    #[allow(clippy::too_many_arguments)]
+    pub unsafe fn key_event(
+        event_type: NSUInteger,
+        location: NSPoint,
+        window_number: NSInteger,
+        characters: &str,
+        key_code: u16,
+    ) -> Strong<NSEvent> {
+        let chars = NSString::from_str(characters);
+        let raw = send10::<
+            NSUInteger,
+            NSPoint,
+            NSUInteger,
+            CFTimeInterval,
+            NSInteger,
+            Raw,
+            Raw,
+            Raw,
+            ObjBOOL,
+            u16,
+            Raw,
+        >(
+            NSEvent::class_ptr().ptr(),
+            ns_sel!("keyEventWithType:location:modifierFlags:timestamp:windowNumber:context:characters:charactersIgnoringModifiers:isARepeat:keyCode:"),
+            event_type,
+            location,
+            0,
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs_f64())
+                .unwrap_or(0.0),
+            window_number,
+            std::ptr::null_mut(),
+            chars.as_ref().as_raw(),
+            chars.as_ref().as_raw(),
+            bool_arg(false),
+            key_code,
+        );
+        Strong::from_retain(raw)
+    }
+
+    /// `+[NSEvent mouseEventWithType:location:modifierFlags:timestamp:windowNumber:context:eventNumber:clickCount:pressure:]`
+    /// (+0 autoreleased → retained).
+    ///
+    /// # Safety
+    /// Calls into the Objective-C runtime.
+    pub unsafe fn mouse_event(
+        event_type: NSUInteger,
+        location: NSPoint,
+        window_number: NSInteger,
+    ) -> Strong<NSEvent> {
+        let raw = send9::<
+            NSUInteger,
+            NSPoint,
+            NSUInteger,
+            CFTimeInterval,
+            NSInteger,
+            Raw,
+            NSInteger,
+            NSInteger,
+            f32,
+            Raw,
+        >(
+            NSEvent::class_ptr().ptr(),
+            ns_sel!("mouseEventWithType:location:modifierFlags:timestamp:windowNumber:context:eventNumber:clickCount:pressure:"),
+            event_type,
+            location,
+            0,
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs_f64())
+                .unwrap_or(0.0),
+            window_number,
+            std::ptr::null_mut(),
+            0,
+            1,
+            1.0f32,
+        );
+        Strong::from_retain(raw)
+    }
 }
 
 ns_class!(
@@ -450,6 +813,14 @@ impl NSDate {
             seconds,
         ))
     }
+}
+
+/// `-contentsScale` on a `CALayer` (`CAMetalLayer` inherits it).
+///
+/// # Safety
+/// Calls into the Objective-C runtime.
+pub unsafe fn layer_contents_scale(layer: Raw) -> CGFloat {
+    send::<CGFloat>(layer, ns_sel!("contentsScale"))
 }
 
 /// `-setContentsScale:` on a `CALayer` (`CAMetalLayer` inherits it).

@@ -4,7 +4,8 @@
 //! * `App` owns an AppKit window (`NSApplication` + layer-hosted
 //!   `CAMetalLayer`), pumps the event loop by hand
 //!   (`nextEventMatchingMask:untilDate:inMode:dequeue:`) and renders every
-//!   frame through the library's Metal wrappers.
+//!   frame through the library's Metal wrappers into a 4x multisampled
+//!   target that is resolved into the layer's drawable.
 //! * `Frame` is what each example's closure receives per frame: a pure
 //!   vertex collector (rects, circles, lines, 5x7 bitmap text) plus
 //!   keyboard/mouse state. After the closure returns, the collected
@@ -16,36 +17,52 @@
 //!   array. Uniform layout convention: `u[0] = (width, height, time,
 //!   scale)`, `u[1..]` = the floats passed to `draw_custom`.
 //!
-//! ESC closes every example; the red close button does too.
+//! # Coordinates
+//!
+//! Everything is drawn in *units*: two per point, on every display. The
+//! gallery was laid out on that grid (a 640×400-point window is a 1280×800
+//! canvas), so [`Frame::width`] / [`Frame::height`] are the same numbers on
+//! a Retina and on a non-Retina screen, and no caption outgrows its window
+//! because the backing scale differs. Sizes given in points are converted
+//! with [`Frame::scale`] (`units per point`); the mouse position comes in
+//! the same units, origin top-left.
+//!
+//! ESC closes every example; so do the red close button, `⌘W` and `⌘Q`.
+//!
+//! Headless smoke-testing (frame limits, PNG grabs of the drawable,
+//! synthesised key/mouse events) is available through [`harness`].
 
 #![allow(unsafe_op_in_unsafe_fn)]
 #![allow(dead_code)]
 
 mod appkit;
 mod font;
+pub mod harness;
 
 use std::collections::HashSet;
 use std::time::Instant;
 
 use metal_cpp_rs::metal::device::MTLDevice;
 use metal_cpp_rs::metal::enums::{
-    MTLBlendFactor, MTLLoadAction, MTLPixelFormat, MTLPrimitiveType, MTLResourceOptions,
-    MTLStoreAction,
+    MTLBlendFactor, MTLCommandBufferStatus, MTLLoadAction, MTLPixelFormat, MTLPrimitiveType,
+    MTLResourceOptions, MTLStorageMode, MTLStoreAction, MTLTextureUsage,
 };
-use metal_cpp_rs::metal::pipeline::MTLRenderPipelineState;
-use metal_cpp_rs::metal::resources::MTLBuffer;
-use metal_cpp_rs::objc_abi::{NSUInteger, Raw, Ref, Strong};
+use metal_cpp_rs::metal::pipeline::{MTLRenderPipelineDescriptor, MTLRenderPipelineState};
+use metal_cpp_rs::metal::resources::{MTLBuffer, MTLTexture, MTLTextureDescriptor};
+use metal_cpp_rs::metal::types::{MTLOrigin, MTLSize};
+use metal_cpp_rs::objc_abi::{NSUInteger, Raw, Ref, Strong, class_name_of};
 use metal_cpp_rs::prelude::*;
 use metal_cpp_rs::quartz_core::{CAMetalLayer, CGSize};
 
 use appkit::{
-    ACTIVATION_POLICY_REGULAR, EVENT_FLAGS_CHANGED, EVENT_KEY_DOWN, EVENT_KEY_UP,
-    EVENT_LEFT_MOUSE_DOWN, EVENT_LEFT_MOUSE_DRAGGED, EVENT_LEFT_MOUSE_UP, EVENT_MOUSE_MOVED,
-    EVENT_RIGHT_MOUSE_DOWN, EVENT_RIGHT_MOUSE_DRAGGED, EVENT_RIGHT_MOUSE_UP, MODIFIER_FLAG_COMMAND,
-    MODIFIER_FLAG_CONTROL, MODIFIER_FLAG_OPTION, MODIFIER_FLAG_SHIFT, NSApplication, NSDate,
-    NSEvent, NSPoint, NSRect, NSWindow, WINDOW_BACKING_BUFFERED, WINDOW_STYLE_DEFAULT,
-    appkit_force_link, set_layer_contents_scale,
+    ACTIVATION_POLICY_REGULAR, EVENT_KEY_DOWN, EVENT_KEY_UP, EVENT_LEFT_MOUSE_DOWN,
+    EVENT_LEFT_MOUSE_DRAGGED, EVENT_LEFT_MOUSE_UP, EVENT_MOUSE_MOVED, EVENT_RIGHT_MOUSE_DOWN,
+    EVENT_RIGHT_MOUSE_DRAGGED, EVENT_RIGHT_MOUSE_UP, MODIFIER_FLAG_COMMAND, MODIFIER_FLAG_CONTROL,
+    MODIFIER_FLAG_OPTION, MODIFIER_FLAG_SHIFT, NSApplication, NSDate, NSEvent, NSPoint, NSRect,
+    NSWindow, WINDOW_BACKING_BUFFERED, WINDOW_STYLE_DEFAULT, appkit_force_link,
+    current_modifier_flags, install_main_menu, layer_contents_scale, set_layer_contents_scale,
 };
+use harness::Harness;
 
 // ---------------------------------------------------------------------------
 // Key codes (HID usage codes, as returned by `-[NSEvent keyCode]`).
@@ -151,12 +168,19 @@ pub mod key {
 // Constants.
 // ---------------------------------------------------------------------------
 
-/// 16 MB of vertex scratch — roughly 700k [`Vertex`] triangles per frame.
+/// 16 MB of vertex scratch — 524,288 [`Vertex`]es (about 175k triangles).
 const VERTEX_BUFFER_BYTES: u64 = 16 << 20;
 /// 1 MB of uniform scratch — 4096 chunks of 256 bytes.
 const UNIFORM_BUFFER_BYTES: u64 = 1 << 20;
 /// Uniform chunks are 256-byte aligned (64 `f32`s).
 const UNIFORM_CHUNK_FLOATS: usize = 64;
+/// Units per point — the drawing grid every example is laid out on (see
+/// the module docs).
+pub const UNITS_PER_POINT: f32 = 2.0;
+/// Sample count of the render target. On a non-Retina display a unit is
+/// half a pixel, so the thinnest strokes are sub-pixel; multisampling keeps
+/// them an even shade instead of turning them into rows of dots.
+const SAMPLE_COUNT: u64 = 4;
 
 const DEFAULT_SHADER: &str = r#"
 #include <metal_stdlib>
@@ -272,6 +296,18 @@ impl Color {
 }
 
 /// One triangle-list vertex — position in pixel coordinates plus RGBA color.
+///
+/// The layout mirrors the Metal Shading Language declaration every shader
+/// in this directory uses:
+///
+/// ```metal
+/// struct GuiVertex { float2 pos; float4 color; };
+/// ```
+///
+/// MSL lays structs out like C++11, so `color` is padded to the 16-byte
+/// alignment of `float4` and the stride is 32 bytes. A packed 24-byte Rust
+/// struct reads as garbage: vertex `n` would take its position from the
+/// colour channels of earlier vertices.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Vertex {
@@ -279,6 +315,8 @@ pub struct Vertex {
     pub x: f32,
     /// Y position (pixels, origin top-left).
     pub y: f32,
+    /// Padding that aligns `r` to 16 bytes (must stay zero).
+    pub pad: [f32; 2],
     /// Red.
     pub r: f32,
     /// Green.
@@ -295,6 +333,7 @@ impl Vertex {
         Vertex {
             x,
             y,
+            pad: [0.0; 2],
             r: color.r,
             g: color.g,
             b: color.b,
@@ -308,6 +347,7 @@ impl Vertex {
 pub struct Input {
     keys_down: HashSet<u16>,
     keys_pressed: HashSet<u16>,
+    /// `(x, y)` in units, origin top-left.
     mouse_pos: (f32, f32),
     mouse_down: bool,
     mouse_pressed: bool,
@@ -335,7 +375,7 @@ impl Input {
         &self.text
     }
 
-    /// Mouse position in pixels, origin top-left.
+    /// Mouse position in units, origin top-left.
     pub fn mouse(&self) -> (f32, f32) {
         self.mouse_pos
     }
@@ -393,15 +433,15 @@ struct CustomDraw {
 
 /// Per-frame drawing surface handed to the example's closure.
 pub struct Frame {
-    /// Window width in pixels.
+    /// Canvas width in units (two per point).
     pub width: f32,
-    /// Window height in pixels.
+    /// Canvas height in units (two per point).
     pub height: f32,
     /// Seconds since the app started.
     pub time: f32,
     /// Seconds since the previous frame (clamped to 0.1).
     pub dt: f32,
-    /// Backing scale factor (points → pixels).
+    /// Units per point — multiply a size given in points by it.
     pub scale: f32,
     /// Input state for this frame.
     pub input: Input,
@@ -413,24 +453,51 @@ pub struct Frame {
     /// Bitmap text is collected separately and drawn LAST so fullscreen
     /// custom shaders can never bury captions.
     text_verts: Vec<Vertex>,
-    height_points: f32,
+    /// Device pixels per unit (half the backing scale): text is snapped to
+    /// whole device pixels with it.
+    px_per_unit: f32,
 }
 
 impl Frame {
-    /// `(mouse_x, mouse_y)` in pixels, origin top-left.
+    /// `(mouse_x, mouse_y)` in units, origin top-left.
     pub fn mouse(&self) -> (f32, f32) {
-        let (x, y) = self.input.mouse_pos;
-        (x * self.scale, (self.height_points - y) * self.scale)
+        self.input.mouse_pos
     }
 
-    /// Mouse position as `(x, y)` pixels — alias of [`Frame::mouse`].
+    /// Mouse X in units.
     pub fn mouse_x(&self) -> f32 {
         self.mouse().0
     }
 
-    /// Mouse Y in pixels.
+    /// Mouse Y in units.
     pub fn mouse_y(&self) -> f32 {
         self.mouse().1
+    }
+
+    /// Font pixel edge length in units, rounded to whole device pixels so
+    /// bitmap glyphs stay crisp at any backing scale (never below one
+    /// device pixel).
+    fn snapped_size(&self, size: f32) -> f32 {
+        (size * self.px_per_unit).round().max(1.0) / self.px_per_unit
+    }
+
+    /// Snap a coordinate to the device pixel grid (glyph edges land exactly
+    /// on pixel corners instead of straddling two pixels).
+    fn snap(&self, v: f32) -> f32 {
+        (v * self.px_per_unit).round() / self.px_per_unit
+    }
+
+    /// Append a filled `w`×`h` quad (two triangles, six vertices) to `verts`.
+    fn quad(verts: &mut Vec<Vertex>, x: f32, y: f32, w: f32, h: f32, color: Color) {
+        let (x1, y1) = (x + w, y + h);
+        verts.extend_from_slice(&[
+            Vertex::new(x, y, color),
+            Vertex::new(x1, y, color),
+            Vertex::new(x, y1, color),
+            Vertex::new(x1, y, color),
+            Vertex::new(x1, y1, color),
+            Vertex::new(x, y1, color),
+        ]);
     }
 
     /// Set the background color used to clear this frame.
@@ -440,13 +507,7 @@ impl Frame {
 
     /// Add a filled rectangle.
     pub fn rect(&mut self, x: f32, y: f32, w: f32, h: f32, color: Color) {
-        let (x1, y1) = (x + w, y + h);
-        self.verts.push(Vertex::new(x, y, color));
-        self.verts.push(Vertex::new(x1, y, color));
-        self.verts.push(Vertex::new(x, y1, color));
-        self.verts.push(Vertex::new(x1, y, color));
-        self.verts.push(Vertex::new(x1, y1, color));
-        self.verts.push(Vertex::new(x, y1, color));
+        Self::quad(&mut self.verts, x, y, w, h, color);
     }
 
     /// Add a rectangle outline `border` pixels thick.
@@ -541,33 +602,36 @@ impl Frame {
         }
     }
 
-    /// Draw a line of 5x7 bitmap text, top-left anchored, `size` = pixel
-    /// height of one glyph row. Text is drawn after every custom shader pass.
+    /// Draw a line of 5x7 bitmap text, top-left anchored, `size` = height
+    /// of one glyph pixel in units (rounded to whole device pixels, see
+    /// `snapped_size`). Text is drawn after every custom shader pass, so it
+    /// always sits on top.
     pub fn text(&mut self, x: f32, y: f32, size: f32, s: &str, color: Color) {
-        let mut cx = x;
+        let size = self.snapped_size(size);
+        let (mut cx, y) = (self.snap(x), self.snap(y));
         for ch in s.chars() {
             let rows = font::glyph_rows(if ch.is_ascii() { ch as u8 } else { b' ' });
-            for row in 0..7usize {
-                let bits = rows[row];
-                for col in 0..5usize {
-                    if bits & (1 << (4 - col)) != 0 {
-                        // FIX: each lit font pixel must be a filled quad
-                        // (2 triangles = 6 vertices) covering its `size x size`
-                        // cell. The old code pushed a single vertex per lit
-                        // pixel, so triangle-list rasterisation grouped
-                        // arbitrary triples of pixels into garbage triangles
-                        // instead of glyphs.
-                        let px = cx + col as f32 * size;
-                        let py = y + row as f32 * size;
-                        let qx = px + size;
-                        let qy = py + size;
-                        self.text_verts.push(Vertex::new(px, py, color));
-                        self.text_verts.push(Vertex::new(qx, py, color));
-                        self.text_verts.push(Vertex::new(px, qy, color));
-                        self.text_verts.push(Vertex::new(qx, py, color));
-                        self.text_verts.push(Vertex::new(qx, qy, color));
-                        self.text_verts.push(Vertex::new(px, qy, color));
+            for (row, &bits) in rows.iter().enumerate() {
+                // One quad per horizontal run of lit pixels.
+                let lit = |col: usize| bits & (1u8 << (4 - col)) != 0;
+                let mut col = 0usize;
+                while col < 5 {
+                    if !lit(col) {
+                        col += 1;
+                        continue;
                     }
+                    let start = col;
+                    while col < 5 && lit(col) {
+                        col += 1;
+                    }
+                    Self::quad(
+                        &mut self.text_verts,
+                        cx + start as f32 * size,
+                        y + row as f32 * size,
+                        (col - start) as f32 * size,
+                        size,
+                        color,
+                    );
                 }
             }
             cx += font::ADVANCE * size;
@@ -576,13 +640,13 @@ impl Frame {
 
     /// Draw bitmap text centered horizontally at `cx`.
     pub fn text_center(&mut self, cx: f32, y: f32, size: f32, s: &str, color: Color) {
-        let w = font::measure(size, s);
+        let w = font::measure(self.snapped_size(size), s);
         self.text(cx - w * 0.5, y, size, s, color);
     }
 
     /// Width of `s` rendered at `size` (for layout math).
     pub fn text_width(&self, size: f32, s: &str) -> f32 {
-        font::measure(size, s)
+        font::measure(self.snapped_size(size), s)
     }
 
     /// Draw triangles with a custom pipeline (see the module docs for the
@@ -681,18 +745,23 @@ pub struct App {
     default_pso: Strong<MTLRenderPipelineState>,
     vertex_buffer: Strong<MTLBuffer>,
     uniform_buffer: Strong<MTLBuffer>,
+    /// Multisampled render target, resolved into the drawable every frame.
+    msaa_texture: Strong<MTLTexture>,
     input: Input,
     started: Instant,
     last_frame: Instant,
     width_points: f32,
     height_points: f32,
-    scale: f32,
+    /// Backing scale (device pixels per point) of the display the window
+    /// is on.
+    backing_scale: f32,
     running: bool,
 }
 
 impl App {
     /// Create a window titled `title` with a `width`×`height` point content
     /// area and a `CAMetalLayer` swapchain attached to its content view.
+    /// The drawing canvas is `2 × width` by `2 × height` units.
     ///
     /// # Panics
     /// Panics when no Metal device is available or AppKit fails to
@@ -714,6 +783,13 @@ impl App {
 
             let ns_app = NSApplication::sharedApplication();
             ns_app.setActivationPolicy(ACTIVATION_POLICY_REGULAR);
+            // `run` pumps the event loop below in place of
+            // `-[NSApplication run]`, so the start-up half of AppKit has to
+            // be driven by hand: until `finishLaunching` has run the app is
+            // not registered with the window server, cannot activate, and
+            // its window never becomes key (so no keyboard input arrives).
+            ns_app.finishLaunching();
+            install_main_menu(&ns_app, title);
 
             let layer = CAMetalLayer::layer();
             layer.setDevice(device.as_ref());
@@ -731,13 +807,22 @@ impl App {
                 WINDOW_BACKING_BUFFERED,
                 false,
             );
+            // The `Strong` owns the single +1 of alloc/init. Programmatic
+            // windows default to `releasedWhenClosed = YES`, which would
+            // make AppKit drop a reference it does not hold.
+            window.setReleasedWhenClosed(false);
             window.setTitle(NSString::from_str(title).as_ref());
             window.setAcceptsMouseMovedEvents(true);
-            window.cascadeTopLeftFromPoint(NSPoint { x: 20.0, y: 20.0 });
+            // `cascadeTopLeftFromPoint:` only computes a position; the
+            // window has to be moved there itself.
+            let top_left = window.cascadeTopLeftFromPoint(NSPoint { x: 80.0, y: 60.0 });
+            window.setFrameTopLeftPoint(top_left);
 
+            // Layer-hosting view: assign the layer first, then turn on
+            // layer backing (the order AppKit documents).
             let content = window.contentView();
-            content.setWantsLayer(true);
             content.setLayer(layer.as_ref().as_raw());
+            content.setWantsLayer(true);
 
             let bounds = content.bounds();
             let scale = window.backingScaleFactor().max(1.0);
@@ -747,7 +832,7 @@ impl App {
                 bounds.size.height * scale,
             ));
 
-            ns_app.activateIgnoringOtherApps(true);
+            ns_app.activate();
             window.makeKeyAndOrderFront(std::ptr::null_mut());
 
             let default_pso = make_pipeline(&device, DEFAULT_SHADER);
@@ -769,12 +854,13 @@ impl App {
                 default_pso,
                 vertex_buffer,
                 uniform_buffer,
+                msaa_texture: Strong::nil(),
                 input: Input::default(),
                 started: Instant::now(),
                 last_frame: Instant::now(),
                 width_points: bounds.size.width as f32,
                 height_points: bounds.size.height as f32,
-                scale: scale as f32,
+                backing_scale: scale as f32,
                 running: true,
             }
         }
@@ -791,26 +877,123 @@ impl App {
     /// # Panics
     /// Panics if the AppKit event loop cannot be entered (non-macOS host).
     pub fn run<F: FnMut(&mut Frame)>(mut self, mut f: F) {
+        let harness = Harness::from_env();
+        let report = harness.limited();
+        if report {
+            // Grabs read the drawable back, which `framebufferOnly` forbids.
+            unsafe {
+                self.layer.setFramebufferOnly(false);
+                self.report_window();
+            }
+        }
+        let wall = Instant::now();
+        let mut index = 0u64;
         while self.running {
-            metal_cpp_rs::objc_abi::autoreleasepool(|| unsafe {
+            autoreleasepool(|| unsafe {
+                self.inject(&harness, index);
                 self.pump_events();
-                if !self.running {
-                    self.ns_app.terminate(std::ptr::null_mut());
-                    return;
-                }
-                self.sync_size();
-                let mut frame = self.make_frame();
-                f(&mut frame);
                 if self.running {
-                    self.render(&frame);
+                    self.sync_size();
+                    let mut frame = self.make_frame();
+                    f(&mut frame);
+                    if self.running {
+                        self.render(&frame, &harness, index);
+                    }
+                }
+                index += 1;
+                if harness.is_done(index) {
+                    self.running = false;
                 }
             });
+        }
+        if report {
+            let secs = wall.elapsed().as_secs_f64();
+            eprintln!(
+                "{}: {} frames in {:.2}s ({:.1} fps)",
+                harness.name,
+                index,
+                secs,
+                index as f64 / secs.max(1e-6)
+            );
+            std::process::exit(0);
         }
         unsafe { self.ns_app.terminate(std::ptr::null_mut()) };
     }
 
+    /// One-line window/layer state dump for the test harness.
+    unsafe fn report_window(&self) {
+        let content = self.window.contentView();
+        let view_layer = content.layer();
+        let bounds = content.bounds();
+        eprintln!(
+            "{}: key={} active={} releasedWhenClosed={} viewLayer={} metalLayer={} contentsScale={} drawable={:?} bounds={}x{} scale={}",
+            Harness::from_env().name,
+            self.window.isKeyWindow(),
+            self.ns_app.isActive(),
+            self.window.isReleasedWhenClosed(),
+            class_name_of(view_layer),
+            view_layer == self.layer.as_ref().as_raw(),
+            layer_contents_scale(self.layer.as_ref().as_raw()),
+            self.layer.drawableSize(),
+            bounds.size.width,
+            bounds.size.height,
+            self.backing_scale,
+        );
+    }
+
+    /// Post the synthesised events the harness schedules for frame `index`.
+    unsafe fn inject(&mut self, harness: &Harness, index: u64) {
+        if !harness.active() {
+            return;
+        }
+        if harness.close_frame == Some(index) {
+            self.window.performClose(std::ptr::null_mut());
+        }
+        let window = self.window.windowNumber();
+        let origin = NSPoint { x: 0.0, y: 0.0 };
+        for code in harness.downs(index) {
+            let ev = NSEvent::key_event(EVENT_KEY_DOWN, origin, window, harness::key_char(code), code);
+            self.ns_app.postEvent_atStart(ev.as_ref(), false);
+        }
+        for code in harness.ups(index) {
+            let ev = NSEvent::key_event(EVENT_KEY_UP, origin, window, harness::key_char(code), code);
+            self.ns_app.postEvent_atStart(ev.as_ref(), false);
+        }
+        // `locationInWindow` is bottom-left anchored; the harness takes
+        // top-left anchored points like the examples' drawing coordinates.
+        for m in harness.mouse_at(index) {
+            let location = NSPoint {
+                x: m.x,
+                y: self.height_points as f64 - m.y,
+            };
+            let kind = if m.hold_frames > 0 {
+                EVENT_LEFT_MOUSE_DOWN
+            } else {
+                EVENT_MOUSE_MOVED
+            };
+            let ev = NSEvent::mouse_event(kind, location, window);
+            self.ns_app.postEvent_atStart(ev.as_ref(), false);
+        }
+        for (x, y) in harness.mouse_up_at(index) {
+            let location = NSPoint {
+                x,
+                y: self.height_points as f64 - y,
+            };
+            let ev = NSEvent::mouse_event(EVENT_LEFT_MOUSE_UP, location, window);
+            self.ns_app.postEvent_atStart(ev.as_ref(), false);
+        }
+    }
+
     unsafe fn pump_events(&mut self) {
         self.input.begin_frame();
+        // Modifier state is polled, not tracked through flags-changed
+        // events: those only reach a key window, so a Shift held before the
+        // user clicks into the window would go unnoticed.
+        let flags = current_modifier_flags();
+        self.input.shift = flags & MODIFIER_FLAG_SHIFT != 0;
+        self.input.ctrl = flags & MODIFIER_FLAG_CONTROL != 0;
+        self.input.opt = flags & MODIFIER_FLAG_OPTION != 0;
+        self.input.cmd = flags & MODIFIER_FLAG_COMMAND != 0;
         let mode = NSString::from_str("kCFRunLoopDefaultMode");
         // Block briefly for the next event, then drain everything pending.
         let mut until = NSDate::dateWithTimeIntervalSinceNow(1.0 / 120.0);
@@ -838,8 +1021,11 @@ impl App {
     }
 
     /// Handle an event for GUI bookkeeping. Returns `true` when the event
-    /// should still be forwarded to the window server (mouse/window events);
-    /// keyboard events are consumed here so unhandled keys do not beep.
+    /// should still be forwarded to AppKit (`-sendEvent:`): mouse events
+    /// (window dragging, click-to-activate) and Command-key events, which
+    /// the main menu turns into `⌘Q` / `⌘W`. Every other key event is
+    /// consumed here, because a bare `NSView` does not implement
+    /// `keyDown:` and AppKit beeps for each one it is handed.
     unsafe fn handle_event(&mut self, ev: Ref<NSEvent>) -> bool {
         match ev.eventType() {
             EVENT_KEY_DOWN => {
@@ -851,26 +1037,22 @@ impl App {
                 if self.input.keys_down.insert(code) {
                     self.input.keys_pressed.insert(code);
                 }
-                let chars = ev.characters();
-                if !chars.is_nil() {
-                    for ch in chars.to_string().chars() {
-                        if ch.is_ascii_graphic() || ch == ' ' {
-                            self.input.text.push(ch);
+                let flags = ev.modifierFlags();
+                // `characters` of a shortcut is not something the user typed.
+                if flags & (MODIFIER_FLAG_COMMAND | MODIFIER_FLAG_CONTROL) == 0 {
+                    let chars = ev.characters();
+                    if !chars.is_nil() {
+                        for ch in chars.to_string().chars() {
+                            if ch.is_ascii_graphic() || ch == ' ' {
+                                self.input.text.push(ch);
+                            }
                         }
                     }
                 }
-                false
+                flags & MODIFIER_FLAG_COMMAND != 0
             }
             EVENT_KEY_UP => {
                 self.input.keys_down.remove(&ev.keyCode());
-                false
-            }
-            EVENT_FLAGS_CHANGED => {
-                let flags = ev.modifierFlags();
-                self.input.shift = flags & MODIFIER_FLAG_SHIFT != 0;
-                self.input.ctrl = flags & MODIFIER_FLAG_CONTROL != 0;
-                self.input.opt = flags & MODIFIER_FLAG_OPTION != 0;
-                self.input.cmd = flags & MODIFIER_FLAG_COMMAND != 0;
                 false
             }
             EVENT_LEFT_MOUSE_DOWN => {
@@ -882,6 +1064,7 @@ impl App {
             EVENT_LEFT_MOUSE_UP => {
                 self.input.mouse_down = false;
                 self.input.mouse_released = true;
+                self.update_mouse(ev);
                 true
             }
             EVENT_RIGHT_MOUSE_DOWN | EVENT_RIGHT_MOUSE_UP => true,
@@ -895,20 +1078,26 @@ impl App {
 
     unsafe fn update_mouse(&mut self, ev: Ref<NSEvent>) {
         let p = ev.locationInWindow();
-        self.input.mouse_pos = (p.x as f32, p.y as f32);
+        // `locationInWindow` is bottom-left anchored and in points.
+        self.input.mouse_pos = (
+            p.x as f32 * UNITS_PER_POINT,
+            (self.height_points as f64 - p.y) as f32 * UNITS_PER_POINT,
+        );
     }
 
     unsafe fn sync_size(&mut self) {
         let content = self.window.contentView();
         let bounds = content.bounds();
+        // Follows the window across displays: the backing scale changes as
+        // soon as the larger part of the window sits on another screen.
         let scale = self.window.backingScaleFactor().max(1.0);
         if (bounds.size.width as f32) != self.width_points
             || (bounds.size.height as f32) != self.height_points
-            || (scale as f32) != self.scale
+            || (scale as f32) != self.backing_scale
         {
             self.width_points = bounds.size.width as f32;
             self.height_points = bounds.size.height as f32;
-            self.scale = scale as f32;
+            self.backing_scale = scale as f32;
             set_layer_contents_scale(self.layer.as_ref().as_raw(), scale);
             self.layer.setDrawableSize(CGSize::Make(
                 bounds.size.width * scale,
@@ -922,27 +1111,63 @@ impl App {
         let dt = now.duration_since(self.last_frame).as_secs_f32().min(0.1);
         self.last_frame = now;
         Frame {
-            width: self.width_points * self.scale,
-            height: self.height_points * self.scale,
+            width: self.width_points * UNITS_PER_POINT,
+            height: self.height_points * UNITS_PER_POINT,
             time: self.started.elapsed().as_secs_f32(),
             dt,
-            scale: self.scale,
+            scale: UNITS_PER_POINT,
             input: self.input.clone(),
             clear: Color::rgb(0.05, 0.05, 0.08),
             verts: Vec::with_capacity(4096),
             customs: Vec::new(),
             pending_uniforms: Vec::new(),
-            // Text now emits 6 vertices per lit 5x7 font pixel, so a typical
-            // caption needs a few thousand vertices — start with enough
-            // capacity to avoid reallocating every frame.
-            text_verts: Vec::with_capacity(8192),
-            height_points: self.height_points,
+            text_verts: Vec::with_capacity(4096),
+            px_per_unit: self.backing_scale / UNITS_PER_POINT,
         }
     }
 
-    unsafe fn render(&mut self, frame: &Frame) {
+    /// Make sure the multisampled target matches the drawable's size.
+    unsafe fn ensure_msaa_target(&mut self, drawable_texture: Ref<MTLTexture>) {
+        let (w, h) = (drawable_texture.width(), drawable_texture.height());
+        if !self.msaa_texture.is_nil()
+            && self.msaa_texture.width() == w
+            && self.msaa_texture.height() == h
+        {
+            return;
+        }
+        let descriptor = MTLTextureDescriptor::texture2DDescriptor(
+            MTLPixelFormat::PixelFormatBGRA8Unorm,
+            w,
+            h,
+            false,
+        );
+        descriptor.setSampleCount(SAMPLE_COUNT);
+        descriptor.setUsage(MTLTextureUsage::TextureUsageRenderTarget);
+        // Only ever bound as a color attachment: keep it on the GPU.
+        descriptor.setStorageMode(MTLStorageMode::StorageModePrivate);
+        eprintln!(
+            "TRACE desc type={:?} sample={} fmt={:?} {}x{} mip={} usage={:?} storage={:?}",
+            descriptor.textureType(),
+            descriptor.sampleCount(),
+            descriptor.pixelFormat(),
+            descriptor.width(),
+            descriptor.height(),
+            descriptor.mipmapLevelCount(),
+            descriptor.usage(),
+            descriptor.storageMode()
+        );
+        self.msaa_texture = self.device.newTexture(descriptor.as_ref());
+    }
+
+    unsafe fn render(&mut self, frame: &Frame, harness: &Harness, index: u64) {
         let drawable = self.layer.nextDrawable();
         if drawable.is_nil() {
+            if harness.limited() {
+                eprintln!(
+                    "{}: frame {index}: nextDrawable() returned nil",
+                    harness.name
+                );
+            }
             return;
         }
 
@@ -963,34 +1188,40 @@ impl App {
                 frame.text_verts.len(),
             );
         }
+        // Upload uniform chunks into the shared scratch buffer. Chunk `n`
+        // serves the `n`-th custom draw: `u[0]` = frame globals, `u[1..]` =
+        // the example's floats (at most 60, the rest of the 64-float chunk).
         let unif_dst = self.uniform_buffer.contents() as *mut f32;
-        let mut written = 0usize;
+        let globals = [frame.width, frame.height, frame.time, frame.scale];
         for (chunk, uniforms) in frame.pending_uniforms.iter().enumerate() {
             let base = chunk * UNIFORM_CHUNK_FLOATS;
-            let floats = [frame.width, frame.height, frame.time, frame.scale];
-            for (i, v) in floats.iter().enumerate() {
+            for (i, v) in globals.iter().enumerate() {
                 *unif_dst.add(base + i) = *v;
             }
-            for (i, v) in uniforms.iter().enumerate() {
-                if 4 + i < UNIFORM_CHUNK_FLOATS {
-                    *unif_dst.add(base + 4 + i) = *v;
-                }
+            for (i, v) in uniforms.iter().take(UNIFORM_CHUNK_FLOATS - 4).enumerate() {
+                *unif_dst.add(base + 4 + i) = *v;
             }
-            written += 1;
         }
-        // Globals for the default pipeline live in chunk 0.
-        let globals = [frame.width, frame.height, frame.time, frame.scale];
+        // The stock pipeline reads chunk 0 even when there is no custom draw.
         for (i, v) in globals.iter().enumerate() {
             *unif_dst.add(i) = *v;
         }
-        let _ = written;
+
+        // Scene renders into the multisampled target and resolves into the
+        // drawable in the same pass (`StoreActionMultisampleResolve`).
+        let target = drawable.texture();
+        self.ensure_msaa_target(target);
+        if self.msaa_texture.is_nil() {
+            return;
+        }
 
         let render_pass = MTLRenderPassDescriptor::renderPassDescriptor();
         let color0 = render_pass.colorAttachments().objectAtIndexedSubscript(0);
         let attachment = color0.as_attachment();
-        attachment.setTexture(drawable.as_ref().texture());
+        attachment.setTexture(self.msaa_texture.as_ref());
+        attachment.setResolveTexture(target);
         attachment.setLoadAction(MTLLoadAction::LoadActionClear);
-        attachment.setStoreAction(MTLStoreAction::StoreActionStore);
+        attachment.setStoreAction(MTLStoreAction::StoreActionMultisampleResolve);
         color0.setClearColor(metal_cpp_rs::metal::types::MTLClearColor::Make(
             frame.clear.r as f64,
             frame.clear.g as f64,
@@ -1002,15 +1233,11 @@ impl App {
         let encoder = command_buffer.renderCommandEncoder(render_pass.as_ref());
 
         if !frame.verts.is_empty() {
+            // The vertex shader converts unit coordinates to NDC with the
+            // canvas size it reads from the vertex-stage uniform buffer.
             encoder.setRenderPipelineState(self.default_pso.as_ref());
             encoder.setVertexBuffer(self.vertex_buffer.as_ref(), 0, 0);
-            // FIX: the default shader's vertex function reads
-            // `constant float4* uniforms [[buffer(1)]]` (screen size for the
-            // pixel -> NDC conversion). Without this binding the uniform
-            // buffer is unbound at the vertex stage, every position computes
-            // to garbage/NaN and NOTHING is drawn (black window).
             encoder.setVertexBuffer(self.uniform_buffer.as_ref(), 0, 1);
-            encoder.setFragmentBuffer(self.uniform_buffer.as_ref(), 0, 0);
             encoder.drawPrimitives(
                 MTLPrimitiveType::PrimitiveTypeTriangle,
                 0,
@@ -1043,10 +1270,7 @@ impl App {
         if !frame.text_verts.is_empty() {
             encoder.setRenderPipelineState(self.default_pso.as_ref());
             encoder.setVertexBuffer(self.vertex_buffer.as_ref(), 0, 0);
-            // FIX: same missing vertex-stage uniform binding as above — the
-            // text pass uses the default pipeline too.
             encoder.setVertexBuffer(self.uniform_buffer.as_ref(), 0, 1);
-            encoder.setFragmentBuffer(self.uniform_buffer.as_ref(), 0, 0);
             encoder.drawPrimitives(
                 MTLPrimitiveType::PrimitiveTypeTriangle,
                 frame.verts.len() as u64,
@@ -1055,16 +1279,83 @@ impl App {
         }
 
         encoder.endEncoding();
+
+        // A grab copies the drawable into a shared buffer *before* the
+        // drawable is handed to the compositor, so the PNG is exactly what
+        // the window was given. Rows are padded to 256 bytes (the buffer
+        // row-alignment requirement of some macOS GPU families).
+        let grab = if harness.wants_shot(index) {
+            let (w, h) = (target.width(), target.height());
+            let bytes_per_row = (w * 4 + 255) & !255;
+            let buffer = self.device.newBuffer(
+                bytes_per_row * h,
+                MTLResourceOptions::ResourceStorageModeShared,
+            );
+            let blit = command_buffer.blitCommandEncoder();
+            blit.copyFromTextureToBuffer(
+                target,
+                0,
+                0,
+                MTLOrigin::Make(0, 0, 0),
+                MTLSize::Make(w, h, 1),
+                buffer.as_ref(),
+                0,
+                bytes_per_row,
+                bytes_per_row * h,
+            );
+            blit.endEncoding();
+            Some((buffer, w, h, bytes_per_row))
+        } else {
+            None
+        };
+
         command_buffer.presentDrawable(drawable.as_ref().as_raw());
         command_buffer.commit();
+
+        if harness.limited() {
+            // Surface GPU-side failures instead of silently drawing garbage.
+            command_buffer.waitUntilCompleted();
+            if command_buffer.status() == MTLCommandBufferStatus::CommandBufferStatusError {
+                let e = command_buffer.error();
+                let msg = if e.is_nil() {
+                    "<no error>".to_string()
+                } else {
+                    e.localizedDescription().to_string()
+                };
+                eprintln!("{}: frame {index}: command buffer error: {msg}", harness.name);
+            }
+        }
+
+        if let Some((buffer, w, h, bytes_per_row)) = grab {
+            let src = buffer.contents() as *const u8;
+            let mut rgba = vec![0u8; (w * h * 4) as usize];
+            for y in 0..h as usize {
+                for x in 0..w as usize {
+                    // BGRA8Unorm bytes → RGBA.
+                    let p = src.add(y * bytes_per_row as usize + x * 4);
+                    let o = (y * w as usize + x) * 4;
+                    rgba[o] = *p.add(2);
+                    rgba[o + 1] = *p.add(1);
+                    rgba[o + 2] = *p;
+                    rgba[o + 3] = 255;
+                }
+            }
+            let path = harness.shot_path(index);
+            if let Some(dir) = path.parent() {
+                let _ = std::fs::create_dir_all(dir);
+            }
+            if let Err(e) = harness::write_png(&path, w as u32, h as u32, &rgba) {
+                eprintln!("{}: could not write {}: {e}", harness.name, path.display());
+            }
+        }
     }
 }
 
 /// Build a render pipeline whose shaders use the GUI vertex layout: the
-/// vertex function reads `const device GuiVertex* [[buffer(0)]]` (24 bytes:
-/// `float2 pos, float4 color`) and `constant float4* [[buffer(1)]]` uniforms
-/// (`u[0] = (width, height, time, scale)`); name the functions
-/// `vertex_main` and `fragment_main`.
+/// vertex function reads `const device GuiVertex* [[buffer(0)]]` (a
+/// [`Vertex`]: `float2 pos; float4 color;`, 32 bytes with MSL padding) and
+/// `constant float4* [[buffer(1)]]` uniforms (`u[0] = (width, height, time,
+/// scale)` in units); name the functions `vertex_main` and `fragment_main`.
 ///
 /// # Panics
 /// Panics with the shader-compiler error when the MSL source is invalid.
@@ -1074,12 +1365,9 @@ pub fn make_pipeline(
 ) -> Strong<MTLRenderPipelineState> {
     unsafe {
         let source = NSString::from_str(msl_source);
+        let options = MTLCompileOptions::new();
         let mut error = Strong::<NSError>::nil();
-        let library = device.newLibrary(
-            source.as_ref(),
-            MTLCompileOptions::new().as_ref(),
-            &mut error,
-        );
+        let library = device.newLibrary(source.as_ref(), options.as_ref(), &mut error);
         if library.is_nil() {
             let msg = if error.is_nil() {
                 "<no error object>".to_string()
@@ -1096,6 +1384,9 @@ pub fn make_pipeline(
         let desc = MTLRenderPipelineDescriptor::new();
         desc.setVertexFunction(vertex_fn.as_ref());
         desc.setFragmentFunction(fragment_fn.as_ref());
+        // Must match the sample count of the attachment the pipeline draws
+        // into (`App::render`).
+        desc.setRasterSampleCount(SAMPLE_COUNT);
         let color0 = desc.colorAttachments().objectAtIndexedSubscript(0);
         color0.setPixelFormat(MTLPixelFormat::PixelFormatBGRA8Unorm);
         // Straight alpha blending — `rgba(.., a)` overlays and fades work

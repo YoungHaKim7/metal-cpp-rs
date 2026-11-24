@@ -348,6 +348,7 @@ impl NSString {
 
 /// `NS::Array<T>` (`Foundation/NSArray.hpp`).
 #[repr(transparent)]
+#[derive(Clone, Copy)]
 pub struct NSArray<T: Obj>(Raw, PhantomData<*const T>);
 
 impl<T: Obj> Obj for NSArray<T> {
@@ -422,6 +423,7 @@ impl<T: Obj> NSArray<T> {
 
 /// `NS::Dictionary<K, V>` (`Foundation/NSDictionary.hpp`).
 #[repr(transparent)]
+#[derive(Clone, Copy)]
 pub struct NSDictionary<K: Obj, V: Obj>(Raw, PhantomData<*const (K, V)>);
 
 impl<K: Obj, V: Obj> Obj for NSDictionary<K, V> {
