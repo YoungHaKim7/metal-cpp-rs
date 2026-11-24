@@ -14,7 +14,7 @@ use std::sync::LazyLock;
 use metal_cpp_rs::foundation::NSString;
 use metal_cpp_rs::objc_abi::{
     CFTimeInterval, CGFloat, Class, NSInteger, NSUInteger, Obj, ObjBOOL, Raw, Ref, Sel, Strong,
-    bool_arg, send, send10, send3, send9, send_bool, send_stret, send1, send2, send4,
+    bool_arg, send, send_bool, send_stret, send1, send2, send3, send4, send9, send10,
 };
 use metal_cpp_rs::quartz_core::CGSize;
 
@@ -551,7 +551,11 @@ impl NSMenu {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setAutoenablesItems(&self, flag: bool) {
-        send1::<ObjBOOL, ()>(self.as_raw(), ns_sel!("setAutoenablesItems:"), bool_arg(flag));
+        send1::<ObjBOOL, ()>(
+            self.as_raw(),
+            ns_sel!("setAutoenablesItems:"),
+            bool_arg(flag),
+        );
     }
 }
 
@@ -569,7 +573,11 @@ impl NSMenuItem {
     /// # Safety
     /// Calls into the Objective-C runtime.
     pub unsafe fn setKeyEquivalentModifierMask(&self, mask: NSUInteger) {
-        send1::<NSUInteger, ()>(self.as_raw(), ns_sel!("setKeyEquivalentModifierMask:"), mask);
+        send1::<NSUInteger, ()>(
+            self.as_raw(),
+            ns_sel!("setKeyEquivalentModifierMask:"),
+            mask,
+        );
     }
 }
 
@@ -726,7 +734,9 @@ impl NSEvent {
             Raw,
         >(
             NSEvent::class_ptr().ptr(),
-            ns_sel!("keyEventWithType:location:modifierFlags:timestamp:windowNumber:context:characters:charactersIgnoringModifiers:isARepeat:keyCode:"),
+            ns_sel!(
+                "keyEventWithType:location:modifierFlags:timestamp:windowNumber:context:characters:charactersIgnoringModifiers:isARepeat:keyCode:"
+            ),
             event_type,
             location,
             0,
@@ -767,7 +777,9 @@ impl NSEvent {
             Raw,
         >(
             NSEvent::class_ptr().ptr(),
-            ns_sel!("mouseEventWithType:location:modifierFlags:timestamp:windowNumber:context:eventNumber:clickCount:pressure:"),
+            ns_sel!(
+                "mouseEventWithType:location:modifierFlags:timestamp:windowNumber:context:eventNumber:clickCount:pressure:"
+            ),
             event_type,
             location,
             0,

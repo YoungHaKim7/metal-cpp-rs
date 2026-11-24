@@ -691,9 +691,11 @@ impl Frame {
         }
         let first = self.verts.len() as u32;
         let z = self.zoom;
-        self.verts.extend(verts.iter().map(|v| {
-            Vertex::new(v.x * z, v.y * z, Color::rgba(v.r, v.g, v.b, v.a))
-        }));
+        self.verts.extend(
+            verts
+                .iter()
+                .map(|v| Vertex::new(v.x * z, v.y * z, Color::rgba(v.r, v.g, v.b, v.a))),
+        );
         let uniform_offset_bytes = self.customs.len() as usize * UNIFORM_CHUNK_FLOATS * 4;
         if (uniform_offset_bytes as u64 + UNIFORM_CHUNK_FLOATS as u64 * 4) > UNIFORM_BUFFER_BYTES {
             self.verts.truncate(first as usize);
@@ -1002,11 +1004,18 @@ impl App {
         let window = self.window.windowNumber();
         let origin = NSPoint { x: 0.0, y: 0.0 };
         for code in harness.downs(index) {
-            let ev = NSEvent::key_event(EVENT_KEY_DOWN, origin, window, harness::key_char(code), code);
+            let ev = NSEvent::key_event(
+                EVENT_KEY_DOWN,
+                origin,
+                window,
+                harness::key_char(code),
+                code,
+            );
             self.ns_app.postEvent_atStart(ev.as_ref(), false);
         }
         for code in harness.ups(index) {
-            let ev = NSEvent::key_event(EVENT_KEY_UP, origin, window, harness::key_char(code), code);
+            let ev =
+                NSEvent::key_event(EVENT_KEY_UP, origin, window, harness::key_char(code), code);
             self.ns_app.postEvent_atStart(ev.as_ref(), false);
         }
         // `locationInWindow` is bottom-left anchored; the harness takes
@@ -1384,7 +1393,10 @@ impl App {
                 } else {
                     e.localizedDescription().to_string()
                 };
-                eprintln!("{}: frame {index}: command buffer error: {msg}", harness.name);
+                eprintln!(
+                    "{}: frame {index}: command buffer error: {msg}",
+                    harness.name
+                );
             }
         }
 

@@ -76,7 +76,11 @@ impl Life {
                     _ => 0,
                 };
                 next[i] = alive;
-                next_age[i] = if alive == 1 { self.age[i].saturating_add(1) } else { 0 };
+                next_age[i] = if alive == 1 {
+                    self.age[i].saturating_add(1)
+                } else {
+                    0
+                };
                 self.pop += alive as usize;
             }
         }

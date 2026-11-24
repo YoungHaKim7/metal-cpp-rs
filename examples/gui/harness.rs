@@ -85,10 +85,7 @@ fn var(name: &str) -> Option<OsString> {
 }
 
 fn parse_list<T>(s: &OsString, f: impl FnMut(&str) -> Option<T>) -> Vec<T> {
-    s.to_string_lossy()
-        .split(',')
-        .filter_map(f)
-        .collect()
+    s.to_string_lossy().split(',').filter_map(f).collect()
 }
 
 impl Harness {
@@ -149,7 +146,10 @@ impl Harness {
 
     /// Is any harness option set (event injection runs)?
     pub fn active(&self) -> bool {
-        self.limited() || self.close_frame.is_some() || !self.keys.is_empty() || !self.holds.is_empty()
+        self.limited()
+            || self.close_frame.is_some()
+            || !self.keys.is_empty()
+            || !self.holds.is_empty()
             || !self.mouse.is_empty()
     }
 

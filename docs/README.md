@@ -1,3 +1,9 @@
+# 고쳐야할것
+- 이 프로젝트 완료하고 다음으로 고쳐야할것
+  - [ ] https://github.com/YoungHaKim7/learn-metal-rust
+- examples 
+  - [x] 001_hello_window.rs ~ 100 ㄱㅓ의 고침
+
 # metal doc
 - https://developer.apple.com/documentation/metal
 - C++ 
