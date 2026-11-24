@@ -76,7 +76,7 @@ impl Life {
                     _ => 0,
                 };
                 next[i] = alive;
-                next_age[i] = if alive == 1 { self.age[i] + 1 } else { 0 };
+                next_age[i] = if alive == 1 { self.age[i].saturating_add(1) } else { 0 };
                 self.pop += alive as usize;
             }
         }
@@ -96,7 +96,14 @@ impl Life {
             .zip(self.grid.iter())
             .for_each(|(a, &g)| *a = g as u32);
         self.generation = 0;
-        self.pop = self.grid.iter().sum::<u8>() as usize;
+        self.pop = self.population();
+    }
+
+    /// Number of live cells. The sum is taken in `usize`: a board of a few
+    /// thousand cells overflows a `u8` accumulator as soon as the colony
+    /// passes 255 members.
+    fn population(&self) -> usize {
+        self.grid.iter().map(|&cell| cell as usize).sum()
     }
 
     fn clear(&mut self) {
@@ -113,7 +120,7 @@ impl Life {
                 self.grid[i] = 1;
             }
         }
-        self.pop = self.grid.iter().sum::<u8>() as usize;
+        self.pop = self.population();
     }
 
     fn age_color(age: u32) -> gui::Color {

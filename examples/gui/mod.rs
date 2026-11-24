@@ -45,7 +45,7 @@ use std::time::Instant;
 use metal_cpp_rs::metal::device::MTLDevice;
 use metal_cpp_rs::metal::enums::{
     MTLBlendFactor, MTLCommandBufferStatus, MTLLoadAction, MTLPixelFormat, MTLPrimitiveType,
-    MTLResourceOptions, MTLStorageMode, MTLStoreAction, MTLTextureUsage,
+    MTLResourceOptions, MTLStorageMode, MTLStoreAction, MTLTextureType, MTLTextureUsage,
 };
 use metal_cpp_rs::metal::pipeline::{MTLRenderPipelineDescriptor, MTLRenderPipelineState};
 use metal_cpp_rs::metal::resources::{MTLBuffer, MTLTexture, MTLTextureDescriptor};
@@ -474,11 +474,19 @@ impl Frame {
         self.mouse().1
     }
 
-    /// Font pixel edge length in units, rounded to whole device pixels so
-    /// bitmap glyphs stay crisp at any backing scale (never below one
-    /// device pixel).
-    fn snapped_size(&self, size: f32) -> f32 {
-        (size * self.px_per_unit).round().max(1.0) / self.px_per_unit
+    /// Height of one glyph pixel, in units, that `s` should be drawn with:
+    /// `size` rounded to whole device pixels (bitmap glyphs stay crisp at
+    /// any backing scale; never below one device pixel), then stepped down
+    /// pixel by pixel while `s` would be wider than the canvas — a long
+    /// caption shrinks instead of being cut off at both ends, which matters
+    /// because rounding a half-pixel size up can make a line a third wider
+    /// than it was laid out to be.
+    fn fitted_size(&self, size: f32, s: &str) -> f32 {
+        let mut px = (size * self.px_per_unit).round().max(1.0);
+        while px > 1.0 && font::measure(px / self.px_per_unit, s) > self.width {
+            px -= 1.0;
+        }
+        px / self.px_per_unit
     }
 
     /// Snap a coordinate to the device pixel grid (glyph edges land exactly
@@ -588,26 +596,23 @@ impl Frame {
         if segments < 3 {
             return;
         }
+        // One quad per arc segment, between the inner and the outer edge.
+        let mut edge = |angle: f32, r: f32| (cx + angle.cos() * r, cy + angle.sin() * r);
         for i in 0..segments {
             let a0 = (i as f32) / segments as f32 * std::f32::consts::TAU;
             let a1 = ((i + 1) as f32) / segments as f32 * std::f32::consts::TAU;
-            let (c0x, c0y) = (cx + a0.cos(), cy + a0.sin());
-            let (c1x, c1y) = (cx + a1.cos(), cy + a1.sin());
-            let o0 = (c0x * r_outer, c0y * r_outer);
-            let o1 = (c1x * r_outer, c1y * r_outer);
-            let i0 = (c0x * r_inner, c0y * r_inner);
-            let i1 = (c1x * r_inner, c1y * r_inner);
+            let (o0, o1) = (edge(a0, r_outer), edge(a1, r_outer));
+            let (i0, i1) = (edge(a0, r_inner), edge(a1, r_inner));
             self.tri(o0, o1, i0, color);
             self.tri(o1, i1, i0, color);
         }
     }
 
     /// Draw a line of 5x7 bitmap text, top-left anchored, `size` = height
-    /// of one glyph pixel in units (rounded to whole device pixels, see
-    /// `snapped_size`). Text is drawn after every custom shader pass, so it
-    /// always sits on top.
+    /// of one glyph pixel in units (see `fitted_size`). Text is drawn after
+    /// every custom shader pass, so it always sits on top.
     pub fn text(&mut self, x: f32, y: f32, size: f32, s: &str, color: Color) {
-        let size = self.snapped_size(size);
+        let size = self.fitted_size(size, s);
         let (mut cx, y) = (self.snap(x), self.snap(y));
         for ch in s.chars() {
             let rows = font::glyph_rows(if ch.is_ascii() { ch as u8 } else { b' ' });
@@ -640,13 +645,13 @@ impl Frame {
 
     /// Draw bitmap text centered horizontally at `cx`.
     pub fn text_center(&mut self, cx: f32, y: f32, size: f32, s: &str, color: Color) {
-        let w = font::measure(self.snapped_size(size), s);
+        let w = font::measure(self.fitted_size(size, s), s);
         self.text(cx - w * 0.5, y, size, s, color);
     }
 
     /// Width of `s` rendered at `size` (for layout math).
     pub fn text_width(&self, size: f32, s: &str) -> f32 {
-        font::measure(self.snapped_size(size), s)
+        font::measure(self.fitted_size(size, s), s)
     }
 
     /// Draw triangles with a custom pipeline (see the module docs for the
@@ -883,7 +888,7 @@ impl App {
             // Grabs read the drawable back, which `framebufferOnly` forbids.
             unsafe {
                 self.layer.setFramebufferOnly(false);
-                self.report_window();
+                self.report_window("start");
             }
         }
         let wall = Instant::now();
@@ -907,6 +912,7 @@ impl App {
             });
         }
         if report {
+            unsafe { self.report_window("end") };
             let secs = wall.elapsed().as_secs_f64();
             eprintln!(
                 "{}: {} frames in {:.2}s ({:.1} fps)",
@@ -920,14 +926,16 @@ impl App {
         unsafe { self.ns_app.terminate(std::ptr::null_mut()) };
     }
 
-    /// One-line window/layer state dump for the test harness.
-    unsafe fn report_window(&self) {
+    /// One-line window/layer state dump for the test harness (`phase` tells
+    /// start of run from end of run, since activation is asynchronous).
+    unsafe fn report_window(&self, phase: &str) {
         let content = self.window.contentView();
         let view_layer = content.layer();
         let bounds = content.bounds();
         eprintln!(
-            "{}: key={} active={} releasedWhenClosed={} viewLayer={} metalLayer={} contentsScale={} drawable={:?} bounds={}x{} scale={}",
+            "{}[{}]: key={} active={} releasedWhenClosed={} viewLayer={} metalLayer={} contentsScale={} drawable={:?} bounds={}x{} scale={}",
             Harness::from_env().name,
+            phase,
             self.window.isKeyWindow(),
             self.ns_app.isActive(),
             self.window.isReleasedWhenClosed(),
@@ -1141,21 +1149,14 @@ impl App {
             h,
             false,
         );
+        // A multisampled texture is its own texture type: with the plain
+        // `2D` type Metal rejects `sampleCount > 1` ("type that does not
+        // allow sampleCount").
+        descriptor.setTextureType(MTLTextureType::TextureType2DMultisample);
         descriptor.setSampleCount(SAMPLE_COUNT);
         descriptor.setUsage(MTLTextureUsage::TextureUsageRenderTarget);
         // Only ever bound as a color attachment: keep it on the GPU.
         descriptor.setStorageMode(MTLStorageMode::StorageModePrivate);
-        eprintln!(
-            "TRACE desc type={:?} sample={} fmt={:?} {}x{} mip={} usage={:?} storage={:?}",
-            descriptor.textureType(),
-            descriptor.sampleCount(),
-            descriptor.pixelFormat(),
-            descriptor.width(),
-            descriptor.height(),
-            descriptor.mipmapLevelCount(),
-            descriptor.usage(),
-            descriptor.storageMode()
-        );
         self.msaa_texture = self.device.newTexture(descriptor.as_ref());
     }
 
