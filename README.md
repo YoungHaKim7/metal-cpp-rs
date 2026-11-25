@@ -9,6 +9,28 @@
 > [!WARNING]  
 > This is code written with AI. Double-check the code before using the project
 
+<h2 align="center">metal-cpp-rs</h2>
+<br />
+
+<div align="center">
+  <!-- Crates version -->
+  <a href="https://crates.io/crates/metal-cpp-rs">
+    <img src="https://img.shields.io/crates/v/metal-cpp-rs.svg?style=flat-square"
+    alt="Crates.io version" />
+  </a>
+  <!-- Downloads -->
+  <a href="https://crates.io/crates/metal-cpp-rs">
+    <img src="https://img.shields.io/crates/d/metal-cpp-rs.svg?style=flat-square"
+      alt="Download" />
+  </a>
+  <!-- docs.rs docs -->
+  <a href="https://docs.rs/metal-cpp-rs">
+    <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square"
+      alt="docs.rs docs" />
+  </a>
+</div>
+<br/>
+
 # metal-cpp-rs
 
 **ABI-faithful Rust conversion of Apple's
@@ -27,7 +49,7 @@ $ cargo check --all-targets     # works on any host
     Finished `dev` profile (0 errors, 0 warnings)
 ```
 
-# What is metal-cpp?
+## What is metal-cpp?
 
 - [Youtube) WWDC22: Program Metal In C++ with metal cpp | Apple](https://youtu.be/h1mOkhFOSPU?si=u9kC4wrRnAyuTEVH)
 - [(원본)wwdc22에서 Metal-cpp를 통해 C++로 Metal 프로그래밍을(를) 확인하십시오. | Metal-cpp를 통해 C++로 Metal 프로그래밍](https://developer.apple.com/kr/videos/play/wwdc2022/10160)
