@@ -17,6 +17,9 @@ struct GuiVertex {
 
 struct GuiOut {
     float4 position [[position]];
+    // Canvas coordinate in drawing units, interpolated from the vertices:
+    // independent of the display's pixel density, unlike `position`.
+    float2 pos;
     float4 color;
 };
 
@@ -28,20 +31,21 @@ vertex GuiOut vertex_main(const device GuiVertex* v [[buffer(0)]],
                         1.0 - v[vid].pos.y / size.y * 2.0);
     GuiOut out;
     out.position = float4(ndc, 0.0, 1.0);
+    out.pos = v[vid].pos;
     out.color = v[vid].color;
     return out;
 }
 
-fragment float4 fragment_main(float4 frag [[position]],
+fragment float4 fragment_main(GuiOut in [[stage_in]],
                               constant float4* u [[buffer(0)]]) {
     float2 size = u[0].xy;
-    if (frag.y < 56.0 || frag.y > size.y - 56.0) {
+    if (in.pos.y < 56.0 || in.pos.y > size.y - 56.0) {
         return float4(0.02, 0.02, 0.05, 1.0);
     }
     float t = u[0].z;
     float2 base = size * 0.5;
     float2 center = base + (u[1].xy - base) * 0.18;
-    float2 p = frag.xy - center;
+    float2 p = in.pos - center;
     float r = max(length(p), 1.5);
     float a = atan2(p.y, p.x);
     float depth = log2(r) * 1.1 - t * 1.5;

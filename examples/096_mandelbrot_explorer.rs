@@ -22,6 +22,9 @@ struct GuiVertex {
 
 struct GuiOut {
     float4 position [[position]];
+    // Canvas coordinate in drawing units, interpolated from the vertices:
+    // independent of the display's pixel density, unlike `position`.
+    float2 pos;
     float4 color;
 };
 
@@ -33,15 +36,16 @@ vertex GuiOut vertex_main(const device GuiVertex* v [[buffer(0)]],
                         1.0 - v[vid].pos.y / size.y * 2.0);
     GuiOut out;
     out.position = float4(ndc, 0.0, 1.0);
+    out.pos = v[vid].pos;
     out.color = v[vid].color;
     return out;
 }
 
 // u[1] = (center_x, center_y, scale, 0) — scale = half-height in complex units.
-// u[2] = (rect_x, rect_y, rect_w, rect_h) — plot area in pixels.
-fragment float4 fragment_main(float4 frag [[position]],
+// u[2] = (rect_x, rect_y, rect_w, rect_h) — plot area in canvas units.
+fragment float4 fragment_main(GuiOut in [[stage_in]],
                               constant float4* u [[buffer(0)]]) {
-    float2 q = (frag.xy - u[2].xy) / u[2].zw;
+    float2 q = (in.pos - u[2].xy) / u[2].zw;
     float aspect = u[2].z / u[2].w;
     float2 c = u[1].xy + float2((q.x - 0.5) * 2.0 * u[1].z * aspect,
                                 (0.5 - q.y) * 2.0 * u[1].z);
@@ -148,7 +152,7 @@ fn main() {
         let in_rect =
             mx >= rect.0 && mx <= rect.0 + rect.2 && my >= rect.1 && my <= rect.1 + rect.3;
         if f.input.mouse_pressed() && in_rect {
-            // Pixel -> complex plane under the *current* animated view, using
+            // Canvas point -> complex plane under the *current* animated view, using
             // the same mapping the fragment shader applies to `srect`.
             let qx = (mx - srect.0) / srect.2;
             let qy = (my - srect.1) / srect.3;

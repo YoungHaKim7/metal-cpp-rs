@@ -79,6 +79,12 @@ fn main() {
             f.circle_segments(x, y, r, 24, col);
         }
 
+        // Caption strips, like the fullscreen shader examples keep: the
+        // packing reaches every edge and would otherwise sit under the text.
+        let band = gui::Color::rgba(0.05, 0.05, 0.08, 0.82);
+        f.rect(0.0, 0.0, f.width, 72.0, band);
+        f.rect(0.0, f.height - 56.0, f.width, 56.0, band);
+
         let status = if packer.done {
             format!("PACKING COMPLETE - {} CIRCLES", packer.circles.len())
         } else {

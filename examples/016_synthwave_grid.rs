@@ -17,6 +17,9 @@ struct GuiVertex {
 
 struct GuiOut {
     float4 position [[position]];
+    // Canvas coordinate in drawing units, interpolated from the vertices:
+    // independent of the display's pixel density, unlike `position`.
+    float2 pos;
     float4 color;
 };
 
@@ -28,53 +31,54 @@ vertex GuiOut vertex_main(const device GuiVertex* v [[buffer(0)]],
                         1.0 - v[vid].pos.y / size.y * 2.0);
     GuiOut out;
     out.position = float4(ndc, 0.0, 1.0);
+    out.pos = v[vid].pos;
     out.color = v[vid].color;
     return out;
 }
 
-fragment float4 fragment_main(float4 frag [[position]],
+fragment float4 fragment_main(GuiOut in [[stage_in]],
                               constant float4* u [[buffer(0)]]) {
     float2 size = u[0].xy;
-    if (frag.y < 56.0 || frag.y > size.y - 56.0) {
+    if (in.pos.y < 56.0 || in.pos.y > size.y - 56.0) {
         return float4(0.03, 0.02, 0.06, 1.0);
     }
     float t = u[0].z;
     float horizon = size.y * 0.46;
     float3 col;
-    if (frag.y < horizon) {
+    if (in.pos.y < horizon) {
         // Sky: near-black at the top, purple toward the horizon, plus stars.
-        float k = frag.y / horizon;
+        float k = in.pos.y / horizon;
         col = mix(float3(0.02, 0.02, 0.05), float3(0.12, 0.04, 0.22), k);
-        float2 cell = floor(frag.xy / 4.0);
+        float2 cell = floor(in.pos / 4.0);
         float h = fract(sin(dot(cell, float2(127.1, 311.7))) * 43758.5453);
         float star = step(0.986, h) * max(sin(t * 2.0 + h * 60.0), 0.0);
         col += float3(0.80, 0.85, 1.00) * star * 0.6;
         // Sun with horizontal scanlines that thicken toward its base.
         float2 sc = float2(size.x * 0.5, horizon - size.y * 0.10);
         float sr = size.y * 0.17;
-        float d = distance(frag.xy, sc);
+        float d = distance(in.pos, sc);
         float inside = 1.0 - smoothstep(sr - 1.5, sr + 1.5, d);
-        float kk = clamp(0.5 - (sc.y - frag.y) / sr * 0.5, 0.0, 1.0);
-        float stripe = fract(frag.y / max(sr * 0.13, 1.0));
+        float kk = clamp(0.5 - (sc.y - in.pos.y) / sr * 0.5, 0.0, 1.0);
+        float stripe = fract(in.pos.y / max(sr * 0.13, 1.0));
         float vis = step(mix(0.12, 0.80, kk), stripe);
         float3 sun_col = mix(float3(1.00, 0.85, 0.30), float3(1.00, 0.28, 0.55), kk);
         col = mix(col, sun_col, inside * vis);
         col += float3(0.90, 0.25, 0.50) * 0.30 * exp(-d * d / (sr * sr * 3.0));
     } else {
         // Ground: rows and columns in true perspective, scrolling forward.
-        float g = (frag.y - horizon) / max(size.y - horizon, 1.0);
+        float g = (in.pos.y - horizon) / max(size.y - horizon, 1.0);
         col = mix(float3(0.10, 0.03, 0.18), float3(0.03, 0.02, 0.07), g);
         float row = 1.0 / max(g, 1e-4) + t * 1.6;
         float drow = abs(fract(row) - 0.5);
         float hline = smoothstep(0.38, 0.49, drow) * smoothstep(0.02, 0.10, g);
-        float xw = (frag.x - size.x * 0.5) / (max(size.y - horizon, 1.0) * max(g, 1e-4));
+        float xw = (in.pos.x - size.x * 0.5) / (max(size.y - horizon, 1.0) * max(g, 1e-4));
         float fx = fract(abs(xw) * 4.0);
         float vline = (1.0 - smoothstep(0.015, 0.05, min(fx, 1.0 - fx))) * smoothstep(0.02, 0.12, g);
         col += float3(1.00, 0.30, 0.65) * hline * 0.85;
         col += float3(0.20, 0.80, 1.00) * vline * 0.50;
     }
     // Hot pink glow line along the horizon.
-    col += float3(1.00, 0.30, 0.60) * 0.40 * exp(-abs(frag.y - horizon) * 0.15);
+    col += float3(1.00, 0.30, 0.60) * 0.40 * exp(-abs(in.pos.y - horizon) * 0.15);
     return float4(col, 1.0);
 }
 "#;

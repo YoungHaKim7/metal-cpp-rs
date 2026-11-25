@@ -4,16 +4,13 @@
 - examples 
   - [x] 001_hello_window.rs ~ 100 ㄱㅓ의 고침
 
-| Class | Examples |
+  | Issue | Examples |
 | --- | --- |
-| Content shrunk into a corner of a much larger window | 061–068, 080–084 |
-| Fractal off-centre | 010, 096 |
-| Subject cut off (camera) | 074, 075, 076 |
-| Nearly/entirely blank or wrong | 011, 015, 031 (SCALE = NAN), 036, 040, 055, 067, 077, 079 |
-| Missing detail | 006, 020, 027 |
-| Overlapping text | 092, 093, 017? |
-| Mouse starts at corner (runtime) | 051 |
-| Need synthetic input to verify | 041, 052, 053, 055, 056–059, games |
+| Text collides with the title | 046, 049, 054, 056, 063 |
+| Particles/strokes too small for 1x | 042 confetti, 079 spirograph, 049 swarm |
+| Blank until clicked | 041, 052, 053 |
+| Too slow to show anything | 061 Langton's ant (30 steps/s) |
+| Fixed-size panel in a large window | 060 |
 
 # metal doc
 - https://developer.apple.com/documentation/metal

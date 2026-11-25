@@ -41,11 +41,13 @@ impl Fountain {
         if self.particles.len() >= CAP {
             return;
         }
+        // The jet reaches most of the window height: v^2 / 2g tops out at
+        // about 1120 units against GRAVITY.
         self.particles.push(Particle {
             x: w * 0.5 + (self.rng.f32() - 0.5) * 16.0,
             y: floor_y - 2.0,
-            vx: (self.rng.f32() - 0.5) * 280.0,
-            vy: -(340.0 + self.rng.f32() * 330.0),
+            vx: (self.rng.f32() - 0.5) * 440.0,
+            vy: -(520.0 + self.rng.f32() * 560.0),
             age: 0.0,
             life: 2.2 + self.rng.f32() * 0.6,
         });
@@ -91,7 +93,9 @@ fn main() {
             let t = (p.age / p.life).clamp(0.0, 1.0);
             let hue = (1.0 - p.y / f.height).clamp(0.0, 1.0) * 0.85;
             let c = gui::Color::hsv(hue, 0.85, 1.0);
-            let size = 3.2 - 1.8 * t;
+            // 6..3 units: never below 1.5 device pixels across on a
+            // non-Retina display, where the old 1.4-unit embers disappeared.
+            let size = 6.0 - 3.0 * t;
             let a = (1.0 - t) * (1.0 - t);
             f.rect(
                 p.x - size * 0.5,

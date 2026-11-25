@@ -46,7 +46,7 @@
 //!
 //! ## Version
 //!
-//! Crate version `1.100.0` — matching the requested Rust toolchain version
+//! Crate version `0.1.0` — matching the requested Rust toolchain version
 //! (rustc 1.100.0 stable, edition 2024, `rust-version = "1.100.0"`).
 
 #![allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]

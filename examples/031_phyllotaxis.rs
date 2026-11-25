@@ -37,7 +37,9 @@ fn main() {
             let fi = i as f32;
             let r = c * fi.sqrt();
             let a = fi * GOLDEN + rot;
-            let size = 2.0 + 2.5 * (r / r_max);
+            // 4..9 units: at least two device pixels across on a non-Retina
+            // display, where 1-2 pixel seeds left the spirals unreadable.
+            let size = 4.0 + 5.0 * (r / r_max);
             f.rect(
                 cx + a.cos() * r - size * 0.5,
                 cy + a.sin() * r - size * 0.5,

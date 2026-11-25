@@ -1,12 +1,12 @@
-//! 006 — Checkerboard: an 8x8 board of 40px cells, centered. Click a cell to
-//! toggle it between the two palette entries, SPACE randomizes roughly 30%
-//! of the cells, and a faint grid keeps the board readable.
+//! 006 — Checkerboard: an 8x8 board sized from the window (70% of the
+//! canvas height), centered. Click a cell to toggle it between the two
+//! palette entries, SPACE randomizes roughly 30% of the cells, and a faint
+//! grid keeps the board readable.
 
 #[path = "gui/mod.rs"]
 mod gui;
 
 const N: usize = 8;
-const CELL: f32 = 40.0;
 
 const PALETTE: [gui::Color; 2] = [
     gui::Color::rgb(0.13, 0.15, 0.21),
@@ -53,7 +53,9 @@ fn main() {
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.07, 0.07, 0.11));
 
-        let bw = N as f32 * CELL;
+        // Cell edge in whole units, so the board follows the window size.
+        let cell = ((f.height * 0.70 / N as f32).floor()).max(8.0);
+        let bw = N as f32 * cell;
         let bx = (f.width - bw) * 0.5;
         let by = (f.height - bw) * 0.5;
 
@@ -64,8 +66,8 @@ fn main() {
         // Cell under the cursor drives both the click and the hover tint.
         let (mx, my) = f.mouse();
         let hit = (
-            ((mx - bx) / CELL).floor() as i64,
-            ((my - by) / CELL).floor() as i64,
+            ((mx - bx) / cell).floor() as i64,
+            ((my - by) / cell).floor() as i64,
         );
         let inside = hit.0 >= 0 && hit.0 < N as i64 && hit.1 >= 0 && hit.1 < N as i64;
 
@@ -79,14 +81,14 @@ fn main() {
                 if inside && hit.0 == x as i64 && hit.1 == y as i64 {
                     col = gui::Color::lerp(col, gui::Color::WHITE, 0.12);
                 }
-                f.rect(bx + x as f32 * CELL, by + y as f32 * CELL, CELL, CELL, col);
+                f.rect(bx + x as f32 * cell, by + y as f32 * cell, cell, cell, col);
             }
         }
 
         // Faint grid over the internal cell boundaries.
         let grid = gui::Color::rgb(0.30, 0.33, 0.42);
         for i in 1..N {
-            let o = i as f32 * CELL;
+            let o = i as f32 * cell;
             f.line(bx + o, by, bx + o, by + bw, 1.0, grid);
             f.line(bx, by + o, bx + bw, by + o, 1.0, grid);
         }

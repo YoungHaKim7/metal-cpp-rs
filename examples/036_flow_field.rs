@@ -1,7 +1,7 @@
 //! 036 — Flow Field: 500 particles drift along the angle field
 //! sin(x*0.012) + cos(y*0.012) with a slow time drift, wrapping at the
-//! edges; each particle draws a 2px head rect plus a short 6-point trail;
-//! R reseeds the swarm.
+//! edges; each particle draws a small square head plus a short fading line
+//! trail; R reseeds the swarm.
 
 #[path = "gui/mod.rs"]
 mod gui;
@@ -88,18 +88,24 @@ fn main() {
 
         for p in &field.particles {
             let color = gui::Color::hsv(p.hue * 0.85 + 0.5, 0.7, 1.0);
+            // The trail as line segments that fade towards the tail. A
+            // segment 2 units wide is a whole device pixel even on a
+            // non-Retina display, where the 1.5-unit dots used before
+            // covered too few samples to be seen at all.
             let n = p.trail.len();
-            for (j, (tx, ty)) in p.trail.iter().enumerate() {
-                let alpha = 0.45 * (j + 1) as f32 / n as f32;
-                f.rect(
-                    tx - 0.75,
-                    ty - 0.75,
-                    1.5,
-                    1.5,
+            for (j, &(tx, ty)) in p.trail.iter().enumerate().skip(1) {
+                let (px, py) = p.trail[j - 1];
+                let alpha = 0.45 * j as f32 / n as f32;
+                f.line(
+                    px,
+                    py,
+                    tx,
+                    ty,
+                    2.0,
                     gui::Color::rgba(color.r, color.g, color.b, alpha),
                 );
             }
-            f.rect(p.x - 1.0, p.y - 1.0, 2.0, 2.0, color);
+            f.rect(p.x - 2.0, p.y - 2.0, 4.0, 4.0, color);
         }
 
         f.text(24.0, 20.0, 4.0, "036 - FLOW FIELD", gui::Color::WHITE);

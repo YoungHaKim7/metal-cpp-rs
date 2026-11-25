@@ -17,6 +17,9 @@ struct GuiVertex {
 
 struct GuiOut {
     float4 position [[position]];
+    // Canvas coordinate in drawing units, interpolated from the vertices:
+    // independent of the display's pixel density, unlike `position`.
+    float2 pos;
     float4 color;
 };
 
@@ -28,19 +31,27 @@ vertex GuiOut vertex_main(const device GuiVertex* v [[buffer(0)]],
                         1.0 - v[vid].pos.y / size.y * 2.0);
     GuiOut out;
     out.position = float4(ndc, 0.0, 1.0);
+    out.pos = v[vid].pos;
     out.color = v[vid].color;
     return out;
 }
 
-fragment float4 fragment_main(float4 frag [[position]],
+// A point in the folded wedge: `k` from 0 to 1 sweeps the wedge's opening
+// angle (0 .. seg/2) at the given radius.
+float2 wedge_point(float radius, float k, float seg) {
+    float angle = seg * 0.5 * k;
+    return float2(cos(angle), sin(angle)) * radius;
+}
+
+fragment float4 fragment_main(GuiOut in [[stage_in]],
                               constant float4* u [[buffer(0)]]) {
     float2 size = u[0].xy;
-    if (frag.y < 56.0 || frag.y > size.y - 56.0) {
+    if (in.pos.y < 56.0 || in.pos.y > size.y - 56.0) {
         return float4(0.03, 0.03, 0.07, 1.0);
     }
     float t = u[0].z;
     float m = min(size.x, size.y);
-    float2 p = frag.xy - size * 0.5;
+    float2 p = in.pos - size * 0.5;
     float r = length(p);
     float a = atan2(p.y, p.x);
     // Fold the angle into 0..seg/2 — 8-fold mirror symmetry.
@@ -49,10 +60,13 @@ fragment float4 fragment_main(float4 frag [[position]],
     a = fmod(a, seg);
     a = min(a, seg - a);
     float2 q = float2(cos(a), sin(a)) * r;
-    // Three drifting blobs sampled in the folded wedge.
-    float2 c1 = float2(sin(t * 0.80), cos(t * 1.10)) * m * 0.26;
-    float2 c2 = float2(cos(t * 0.50 + 2.1), sin(t * 0.70 + 1.3)) * m * 0.30;
-    float2 c3 = float2(sin(t * 0.90 + 4.2), sin(t * 0.40 + 2.8)) * m * 0.15;
+    // Three drifting blobs. Their centres wander inside the folded wedge:
+    // every pixel is sampled from that wedge, so a centre orbiting anywhere
+    // else on the circle would only be seen for the instant its path
+    // crossed it.
+    float2 c1 = wedge_point(m * (0.16 + 0.05 * sin(t * 0.80)), 0.5 + 0.45 * sin(t * 0.60), seg);
+    float2 c2 = wedge_point(m * (0.30 + 0.06 * cos(t * 0.50 + 2.1)), 0.5 + 0.45 * cos(t * 0.70 + 1.3), seg);
+    float2 c3 = wedge_point(m * (0.42 + 0.05 * sin(t * 0.90 + 4.2)), 0.5 + 0.45 * sin(t * 0.40 + 2.8), seg);
     float g = exp(-pow(length(q - c1) / (m * 0.10), 2.0))
             + exp(-pow(length(q - c2) / (m * 0.12), 2.0))
             + exp(-pow(length(q - c3) / (m * 0.08), 2.0));

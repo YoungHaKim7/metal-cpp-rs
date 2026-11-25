@@ -65,7 +65,9 @@ fn main() {
             let p = (cx + (ax * c - ay * s) * r, cy + (ax * s + ay * c) * r);
             let q = (cx + (bx * c - by * s) * r, cy + (bx * s + by * c) * r);
             let hue = i as f32 / total as f32 * 0.5 + 0.52 + f.time * 0.03;
-            f.line(p.0, p.1, q.0, q.1, 1.4, gui::Color::hsv(hue, 0.75, 1.0));
+            // 2 units wide: a whole device pixel on a non-Retina display, where
+            // a 1.4-unit stroke faded to a ghost line.
+            f.line(p.0, p.1, q.0, q.1, 2.0, gui::Color::hsv(hue, 0.75, 1.0));
         }
 
         f.text(24.0, 20.0, 4.0, "027 - KOCH SNOWFLAKE", gui::Color::WHITE);

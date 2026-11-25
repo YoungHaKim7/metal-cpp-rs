@@ -4,11 +4,14 @@
 //! [`Frame::draw_custom`].
 //!
 //! Conventions for custom shaders (fixed by the GUI runtime):
-//! * vertex stage: `const device GuiVertex* v [[buffer(0)]]` (24 bytes:
-//!   `float2 pos` in pixels, `float4 color`) and
-//!   `constant float4* u [[buffer(1)]]` with `u[0] = (w, h, time, scale)`;
-//! * fragment stage: `float4 frag [[position]]` (pixel coords) and
-//!   `constant float4* u [[buffer(0)]]` with the same `u[0]`.
+//! * vertex stage: `const device GuiVertex* v [[buffer(0)]]` (a
+//!   [`gui::Vertex`]: `float2 pos` in canvas units, `float4 color`) and
+//!   `constant float4* u [[buffer(1)]]` with `u[0] = (w, h, time, scale)`,
+//!   `w`/`h` being the canvas size in those units;
+//! * fragment stage: the interpolated `GuiOut` and `constant float4* u
+//!   [[buffer(0)]]` with the same `u[0]`. Work in `in.pos`: it is the canvas
+//!   coordinate. `[[position]]` is in device pixels, which only match the
+//!   canvas on a 2x display.
 
 #[path = "gui/mod.rs"]
 mod gui;
@@ -24,6 +27,9 @@ struct GuiVertex {
 
 struct GuiOut {
     float4 position [[position]];
+    // Canvas coordinate in drawing units, interpolated from the vertices:
+    // independent of the display's pixel density, unlike `position`.
+    float2 pos;
     float4 color;
 };
 
@@ -35,13 +41,14 @@ vertex GuiOut vertex_main(const device GuiVertex* v [[buffer(0)]],
                         1.0 - v[vid].pos.y / size.y * 2.0);
     GuiOut out;
     out.position = float4(ndc, 0.0, 1.0);
+    out.pos = v[vid].pos;
     out.color = v[vid].color;
     return out;
 }
 
-fragment float4 fragment_main(float4 frag [[position]],
+fragment float4 fragment_main(GuiOut in [[stage_in]],
                               constant float4* u [[buffer(0)]]) {
-    float2 uv = frag.xy / u[0].xy;
+    float2 uv = in.pos / u[0].xy;
     float3 top = float3(0.10, 0.35, 0.85);
     float3 bottom = float3(0.85, 0.15, 0.45);
     float3 col = mix(top, bottom, uv.y);

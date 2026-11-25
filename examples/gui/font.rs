@@ -123,8 +123,9 @@ const SYMBOLS: [(char, [u8; 7]); 4] = [
 
 /// The 7 row bytes for a character (bit 4 = leftmost pixel).
 pub fn glyph_rows(ch: char) -> [u8; 7] {
-    if let Some(code) = ch.as_ascii() {
-        return FONT[(code as u8 - 0x20) as usize];
+    let code = ch as u32;
+    if (0x20..=0x7E).contains(&code) {
+        return FONT[(code - 0x20) as usize];
     }
     SYMBOLS
         .iter()
