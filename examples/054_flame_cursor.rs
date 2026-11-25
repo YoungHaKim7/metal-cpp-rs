@@ -127,7 +127,8 @@ fn main() {
             let (mx, my) = f.mouse();
             f.ring(mx, my, 14.0, 12.5, gui::Color::rgba(1.0, 0.7, 0.4, 0.4));
         } else {
-            f.text_center(f.width * 0.5, 30.0, 2.5, "HOME HEARTH", gui::Color::GRAY);
+            // Below the title's band (y 20..48), not across it.
+            f.text_center(f.width * 0.5, 54.0, 2.5, "HOME HEARTH", gui::Color::GRAY);
         }
 
         f.text_center(

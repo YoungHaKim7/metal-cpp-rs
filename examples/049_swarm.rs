@@ -139,16 +139,19 @@ fn main() {
                 radius * 1.02,
                 gui::Color::rgba(0.4, 0.5, 0.8, 0.25),
             );
-            f.text_center(f.width * 0.5, 30.0, 2.5, "ORBIT MODE", gui::Color::GRAY);
+            // Below the title's band (y 20..48), not across it.
+            f.text_center(f.width * 0.5, 54.0, 2.5, "ORBIT MODE", gui::Color::GRAY);
         } else {
-            f.text_center(f.width * 0.5, 30.0, 2.5, "SEEKING MOUSE", gui::Color::CYAN);
+            f.text_center(f.width * 0.5, 54.0, 2.5, "SEEKING MOUSE", gui::Color::CYAN);
         }
 
         for b in &swarm.bugs {
             let sp = (b.vx * b.vx + b.vy * b.vy).sqrt();
             let t = (sp / TOP_MAX).clamp(0.0, 1.0);
             let c = gui::Color::hsv(t, 0.85, 1.0);
-            f.rect(b.x - 1.3, b.y - 1.3, 2.6, 2.6, c);
+            // 4 units: two device pixels across on a non-Retina display,
+            // where the 2.6-unit seekers were single faint samples.
+            f.rect(b.x - 2.0, b.y - 2.0, 4.0, 4.0, c);
         }
 
         f.text_center(f.width * 0.5, 20.0, 4.0, "049 - SWARM", gui::Color::WHITE);

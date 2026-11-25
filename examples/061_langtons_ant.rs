@@ -13,6 +13,10 @@ const COLS: usize = 100;
 const ROWS: usize = 70;
 const CELL: f32 = 10.0;
 const STEP_EVERY: f32 = 1.0 / 30.0;
+/// Ant steps per simulation tick (360 a second). The highway only emerges
+/// after some ten thousand steps; at one step per tick the grid stayed
+/// near-empty for minutes first.
+const STEPS_PER_TICK: usize = 12;
 
 /// Ant headings — up, right, down, left (screen y grows downward).
 const DIRS: [(i32, i32); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
@@ -83,9 +87,11 @@ fn main() {
         }
         if ant.running {
             ant.acc += f.dt;
-            if ant.acc >= STEP_EVERY {
-                ant.acc = 0.0;
-                ant.step();
+            while ant.acc >= STEP_EVERY {
+                ant.acc -= STEP_EVERY;
+                for _ in 0..STEPS_PER_TICK {
+                    ant.step();
+                }
             }
         }
 

@@ -78,14 +78,9 @@ fn main() {
             ca.step();
         }
 
-        // Header.
-        f.text(
-            bx,
-            18.0,
-            4.0,
-            "CYCLIC CELLULAR AUTOMATON",
-            gui::Color::WHITE,
-        );
+        // Header. The title is kept short so it cannot run into the
+        // right-aligned status line.
+        f.text(bx, 18.0, 4.0, "CYCLIC CA", gui::Color::WHITE);
         f.text(
             bx + bw - f.text_width(2.5, "14 STATES ON A TORUS - MOORE-8"),
             26.0,

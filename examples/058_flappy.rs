@@ -37,6 +37,7 @@ struct Flappy {
 }
 
 impl Flappy {
+    // `h` is the canvas height in drawing units.
     fn new(h: f32) -> Flappy {
         Flappy {
             y: h * 0.42,
@@ -113,7 +114,7 @@ impl Flappy {
 }
 
 fn main() {
-    let mut game = Flappy::new(H as f32);
+    let mut game = Flappy::new(H as f32 * gui::UNITS_PER_POINT);
     let app = gui::App::new("058 - Flappy", W, H);
     app.run(move |f| {
         f.set_clear(gui::Color::rgb(0.07, 0.10, 0.16));

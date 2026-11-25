@@ -46,8 +46,9 @@ impl Pong {
         Pong {
             py: 232.0,
             ay: 232.0,
-            bx: W as f32 * 0.5,
-            by: H as f32 * 0.5,
+            // Positions are in drawing units; W/H are the window in points.
+            bx: W as f32 * gui::UNITS_PER_POINT * 0.5,
+            by: H as f32 * gui::UNITS_PER_POINT * 0.5,
             bvx: 0.0,
             bvy: 0.0,
             wait: 1.0,
@@ -200,23 +201,23 @@ fn main() {
         );
         f.circle_segments(game.bx, game.by, BALL_R, 16, gui::Color::WHITE);
 
-        // Score.
+        // Score, under the title's band (y 20..48) rather than across it.
         f.text_center(
             w * 0.5 - 70.0,
-            30.0,
+            64.0,
             8.0,
             &game.ps.to_string(),
             gui::Color::WHITE,
         );
         f.text_center(
             w * 0.5 + 70.0,
-            30.0,
+            64.0,
             8.0,
             &game.cs.to_string(),
             gui::Color::rgb(1.0, 0.45, 0.45),
         );
-        f.text_center(w * 0.5 - 70.0, 92.0, 2.5, "YOU", gui::Color::GRAY);
-        f.text_center(w * 0.5 + 70.0, 92.0, 2.5, "CPU", gui::Color::GRAY);
+        f.text_center(w * 0.5 - 70.0, 126.0, 2.5, "YOU", gui::Color::GRAY);
+        f.text_center(w * 0.5 + 70.0, 126.0, 2.5, "CPU", gui::Color::GRAY);
 
         // End banner.
         match game.end {

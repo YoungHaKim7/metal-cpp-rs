@@ -11,7 +11,6 @@ const W: f64 = 960.0;
 const H: f64 = 760.0;
 const COLS: usize = 150;
 const ROWS: usize = 100;
-const CELL: f32 = 6.0;
 const STEP_EVERY: f32 = 0.1;
 const AUTO_ADVANCE: f32 = 6.0;
 const RULES: [u8; 7] = [30, 45, 60, 90, 105, 110, 150];
@@ -106,9 +105,11 @@ fn main() {
             gui::Color::YELLOW,
         );
 
-        // Board: newest generation on top, history scrolling downward.
-        let bw = COLS as f32 * CELL;
-        let bh = ROWS as f32 * CELL;
+        // Board: newest generation on top, history scrolling downward. The
+        // cell edge follows the window width so the board fills it.
+        let cell = ((f.width * 0.84) / COLS as f32).floor().max(4.0);
+        let bw = COLS as f32 * cell;
+        let bh = ROWS as f32 * cell;
         let bx = (f.width - bw) * 0.5;
         let by = 96.0;
         f.rect(
@@ -128,10 +129,10 @@ fn main() {
             for x in 0..COLS {
                 if cells[x] == 1 {
                     f.rect(
-                        bx + x as f32 * CELL,
-                        by + row as f32 * CELL,
-                        CELL - 1.0,
-                        CELL - 1.0,
+                        bx + x as f32 * cell,
+                        by + row as f32 * cell,
+                        cell - 1.0,
+                        cell - 1.0,
                         ink,
                     );
                 }
@@ -148,7 +149,7 @@ fn main() {
 
         f.text(
             bx,
-            H as f32 - 40.0,
+            f.height - 40.0,
             2.0,
             "SPACE NEXT RULE - AUTO EVERY 6S - PATTERN RESEEDS ON CHANGE - ESC QUITS",
             gui::Color::GRAY,

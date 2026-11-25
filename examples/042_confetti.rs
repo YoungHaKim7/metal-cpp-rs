@@ -53,7 +53,9 @@ impl Confetti {
             phase: self.rng.f32() * std::f32::consts::TAU,
             spin: (self.rng.f32() - 0.5) * 9.0,
             angle: self.rng.f32() * std::f32::consts::TAU,
-            size: 2.0 + self.rng.f32() * 4.0,
+            // 5..12 units (2.5..6 device pixels on a non-Retina display):
+            // small enough to be confetti, large enough to read as paper.
+            size: 5.0 + self.rng.f32() * 7.0,
             hue: self.rng.f32(),
         });
     }

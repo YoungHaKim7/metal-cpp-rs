@@ -34,17 +34,19 @@ fn main() {
         let ratio = (R_FIXED - r) / r;
         let scale = (f.width.min(rh) * 0.5 - 24.0) / (R_FIXED + 0.6 * R_FIXED);
 
-        // The hypotrochoid itself, one 1.5px dot per sample.
+        // The hypotrochoid itself, one 3-unit dot per sample: 1.5 device
+        // pixels even on a non-Retina display, where the 1.5-unit dots
+        // drawn a hairline that all but vanished.
         for i in 0..POINTS {
             let th = i as f32 / POINTS as f32 * std::f32::consts::TAU * TURNS;
             let x = (R_FIXED - r) * th.cos() + d * (ratio * th).cos();
             let y = (R_FIXED - r) * th.sin() - d * (ratio * th).sin();
             let hue = i as f32 / POINTS as f32;
             f.rect(
-                cx + x * scale - 0.75,
-                cy + y * scale - 0.75,
-                1.5,
-                1.5,
+                cx + x * scale - 1.5,
+                cy + y * scale - 1.5,
+                3.0,
+                3.0,
                 gui::Color::hsv(hue, 0.8, 1.0),
             );
         }
