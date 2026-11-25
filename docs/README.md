@@ -4,7 +4,7 @@
 - examples 
   - [x] 001_hello_window.rs ~ 100 ㄱㅓ의 고침
 
-  | Issue | Examples |
+| Issue | Examples |
 | --- | --- |
 | Text collides with the title | 046, 049, 054, 056, 063 |
 | Particles/strokes too small for 1x | 042 confetti, 079 spirograph, 049 swarm |
