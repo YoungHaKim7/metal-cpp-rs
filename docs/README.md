@@ -17,6 +17,12 @@
 - C++ 
   - https://developer.apple.com/metal/cpp/
 
+# Cocoa memory management.
+- part1
+  - https://lapcatsoftware.com/blog/2008/07/28/cocoa-memory-management-for-smarties-part-1-release-me-not/
+- part2
+  - https://lapcatsoftware.com/blog/2008/08/25/cocoa-memory-management-for-smarties-part-2-working-with-a-nib/
+
 # 오리지날 코드 공부(C++20)
 - https://github.com/YoungHaKim7/macOS_gui_apple_metal_rs/tree/main/002_Cpp_Metal_Tutorials
 
